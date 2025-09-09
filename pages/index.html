@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>テトロミノの敷き詰め問題の解答ツール</title>
+  </head>
+  <body>
+    <h1>テトロミノの敷き詰め問題の解答ツール</h1>
+    <div id="problem">
+      <h2>条件設定</h2>
+      <label>
+        行数（N）: <input type="number" id="rows" value="10" min="1" style="width:50px;">
+      </label>
+      <label>
+        列数（M）: <input type="number" id="cols" value="10" min="1" style="width:50px;">
+      </label>
+      <button id="grid-generate">サイズ変更</button>
+      <div id="grid" style="margin-top:20px;"></div>
+      <div style="margin-top:20px;">
+        <h3>使用するテトロミノの個数</h3>
+        <div id="mino-counts" style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div><img src="img/I.png" alt="I" width="32" height="16"><br><input type="number" id="count-I" value="1" min="0" style="width:40px;"></div>
+          <div><img src="img/O.png" alt="O" width="32" height="16"><br><input type="number" id="count-O" value="1" min="0" style="width:40px;"></div>
+          <div><img src="img/T.png" alt="T" width="32" height="16"><br><input type="number" id="count-T" value="1" min="0" style="width:40px;"></div>
+          <div><img src="img/S.png" alt="S" width="32" height="16"><br><input type="number" id="count-S" value="1" min="0" style="width:40px;"></div>
+          <div><img src="img/Z.png" alt="Z" width="32" height="16"><br><input type="number" id="count-Z" value="1" min="0" style="width:40px;"></div>
+          <div><img src="img/J.png" alt="J" width="32" height="16"><br><input type="number" id="count-J" value="1" min="0" style="width:40px;"></div>
+          <div><img src="img/L.png" alt="L" width="32" height="16"><br><input type="number" id="count-L" value="1" min="0" style="width:40px;"></div>
+        </div>
+      </div>
+      <script src="js/main.js"></script>
+      <div style="margin-top:10px;">
+        黒マス: テトロミノ配置不可／白マス: テトロミノ配置可
+      </div>
+      <button id="grid-solve">解答生成</button>
+    </div>
+    <div id="result" style="margin-top:20px;"></div>
+  </body>
+</html>
