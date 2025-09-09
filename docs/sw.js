@@ -1,3 +1,6 @@
+console.log("Service Worker Loaded");
+
+// すべてのfetchリクエストに対して、COEPとCOOPヘッダーを追加する
 self.addEventListener("fetch", (event) => {
   if (event.request.cache === "only-if-cached" && event.request.mode !== "same-origin") {
     return;
