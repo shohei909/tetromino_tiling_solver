@@ -20,6 +20,12 @@ export default defineConfig({
 			// bundle.jsを差し替えする
 			output: {
 				entryFileNames: "assets/bundle.js",
+				assetFileNames: (assetInfo) => {
+					if (assetInfo.names != null && assetInfo.names.length > 0 && assetInfo.names[0] && assetInfo.names[0].endsWith('.css')) {
+						return 'assets/style.css';
+					}
+					return 'assets/[name][extname]';
+				},
 			},
 		},
 	},
