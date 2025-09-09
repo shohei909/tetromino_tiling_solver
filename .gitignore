@@ -4,9 +4,6 @@ node_modules/
 # Vite build output
 dist/
 
-# VS Code settings
-.vscode/
-
 # Logs
 *.log
 npm-debug.log*
