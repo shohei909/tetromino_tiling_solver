@@ -2,38 +2,43 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
+    <link rel="stylesheet" href="css/main.css" />
     <title>テトロミノの敷き詰め問題の解答ツール</title>
   </head>
-  <body>
-    <h1>テトロミノの敷き詰め問題の解答ツール</h1>
-    <div id="problem">
-      <h2>条件設定</h2>
-      <label>
-        行数（N）: <input type="number" id="rows" value="10" min="1" style="width:50px;">
-      </label>
-      <label>
-        列数（M）: <input type="number" id="cols" value="10" min="1" style="width:50px;">
-      </label>
-      <button id="grid-generate">サイズ変更</button>
-      <div id="grid" style="margin-top:20px;"></div>
-      <div style="margin-top:20px;">
-        <h3>使用するテトロミノの個数</h3>
-        <div id="mino-counts" style="display:flex;gap:10px;flex-wrap:wrap;">
-          <div><img src="img/I.png" alt="I" width="32" height="16"><br><input type="number" id="count-I" value="1" min="0" style="width:40px;"></div>
-          <div><img src="img/O.png" alt="O" width="32" height="16"><br><input type="number" id="count-O" value="1" min="0" style="width:40px;"></div>
-          <div><img src="img/T.png" alt="T" width="32" height="16"><br><input type="number" id="count-T" value="1" min="0" style="width:40px;"></div>
-          <div><img src="img/S.png" alt="S" width="32" height="16"><br><input type="number" id="count-S" value="1" min="0" style="width:40px;"></div>
-          <div><img src="img/Z.png" alt="Z" width="32" height="16"><br><input type="number" id="count-Z" value="1" min="0" style="width:40px;"></div>
-          <div><img src="img/J.png" alt="J" width="32" height="16"><br><input type="number" id="count-J" value="1" min="0" style="width:40px;"></div>
-          <div><img src="img/L.png" alt="L" width="32" height="16"><br><input type="number" id="count-L" value="1" min="0" style="width:40px;"></div>
+  <body class="bg-gray-50 min-h-screen">
+    <div class="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
+      <h1 class="text-2xl font-bold text-center mb-6 text-blue-700">テトロミノの敷き詰め問題の解答ツール</h1>
+      <div id="problem">
+        <h2 class="text-lg font-semibold mb-4 text-gray-700">条件設定</h2>
+        <div class="flex gap-4 mb-4 flex-wrap">
+          <label class="flex items-center gap-2">
+            <span class="text-gray-600">行数（N）:</span>
+            <input type="number" id="rows" value="10" min="1" class="border rounded px-2 py-1 w-20">
+          </label>
+          <label class="flex items-center gap-2">
+            <span class="text-gray-600">列数（M）:</span>
+            <input type="number" id="cols" value="10" min="1" class="border rounded px-2 py-1 w-20">
+          </label>
+          <button id="grid-generate" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-1 rounded shadow">サイズ変更</button>
         </div>
+        <div id="grid" class="mb-4"></div>
+        <div class="text-sm text-gray-500 mb-6">黒マス: テトロミノ配置不可／白マス: テトロミノ配置可</div>
+        <div class="mb-6">
+          <h3 class="text-base font-semibold mb-2 text-gray-700">使用するテトロミノの個数</h3>
+          <div id="mino-counts" class="flex gap-4 flex-wrap">
+            <div class="flex flex-col items-center"><img src="img/I.png" alt="I" class="mb-1"><input type="number" id="count-I" value="1" min="0" class="border rounded px-2 py-1 w-16 text-center"></div>
+            <div class="flex flex-col items-center"><img src="img/O.png" alt="O" class="mb-1"><input type="number" id="count-O" value="1" min="0" class="border rounded px-2 py-1 w-16 text-center"></div>
+            <div class="flex flex-col items-center"><img src="img/T.png" alt="T" class="mb-1"><input type="number" id="count-T" value="1" min="0" class="border rounded px-2 py-1 w-16 text-center"></div>
+            <div class="flex flex-col items-center"><img src="img/S.png" alt="S" class="mb-1"><input type="number" id="count-S" value="1" min="0" class="border rounded px-2 py-1 w-16 text-center"></div>
+            <div class="flex flex-col items-center"><img src="img/Z.png" alt="Z" class="mb-1"><input type="number" id="count-Z" value="1" min="0" class="border rounded px-2 py-1 w-16 text-center"></div>
+            <div class="flex flex-col items-center"><img src="img/J.png" alt="J" class="mb-1"><input type="number" id="count-J" value="1" min="0" class="border rounded px-2 py-1 w-16 text-center"></div>
+            <div class="flex flex-col items-center"><img src="img/L.png" alt="L" class="mb-1"><input type="number" id="count-L" value="1" min="0" class="border rounded px-2 py-1 w-16 text-center"></div>
+          </div>
+        </div>
+        <button id="grid-solve" class="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded shadow w-full">解答生成</button>
       </div>
+      <div id="result" class="mt-8"></div>
       <script src="js/main.js"></script>
-      <div style="margin-top:10px;">
-        黒マス: テトロミノ配置不可／白マス: テトロミノ配置可
-      </div>
-      <button id="grid-solve">解答生成</button>
     </div>
-    <div id="result" style="margin-top:20px;"></div>
   </body>
 </html>
