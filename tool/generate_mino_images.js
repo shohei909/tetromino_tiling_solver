@@ -12,7 +12,7 @@ const minos = [
   { name: 'L', color: '#FF9800', shape: [[0,0,1],[1,1,1]] },
 ];
 
-const outDir = path.join(__dirname, '..', 'pages', 'img');
+const outDir = path.join(__dirname, '..', 'public', 'img');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
 for (const mino of minos) {
