@@ -76,7 +76,7 @@ function drawGrid(canvas: HTMLCanvasElement, grid: boolean[][]) {
 	}
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', () => {	
 	createGrid();
 	const btn = document.getElementById('grid-generate');
 	if (btn) btn.onclick = createGrid;
@@ -84,14 +84,13 @@ window.addEventListener('DOMContentLoaded', () => {
 	// grid-solve ボタンの処理
 	const solveBtn = document.getElementById('grid-solve');
 	if (solveBtn) solveBtn.onclick = async () => {
-		const resultDiv = document.getElementById('result');
 		const minoIds = ['I','O','T','S','Z','J','L'];
 		const minos = minoIds.map(id => ({
-			id,
+			id: id as MinoKind,
 			min: Number((document.getElementById('min-' + id) as HTMLInputElement)?.value || 0),
 			max: Number((document.getElementById('max-' + id) as HTMLInputElement)?.value || 0)
 		}));
-		if (resultDiv) await solvePacking(grid, minos, resultDiv);
+		await solvePacking(grid, minos);
 	};
 
 	const fillBlackBtn = document.getElementById('fill-black');

@@ -8,11 +8,13 @@
   <title>テトロミノパッキングソルバー</title>
   </head>
   <body class="bg-light">
+    
   <div style="min-width:500px;margin:40px 10px 0 10px; margin:10px;padding:24px;" class="bg-white rounded shadow-sm">
             <h1 class="text-center mb-4">テトロミノパッキングソルバー</h1>
-  <div class="text-center form-text mb-4">指定された枠内に、7種類のテトロミノを配置するパズルを自動で解きます</div>
+              <div class="text-center form-text mb-4">指定された枠内に、7種類のテトロミノを配置するパズルを自動で解きます</div>
+              <div id="alert" class="text-center alert alert-danger" role="alert" hidden></div>
+              <script type="module" src="js/validate.ts"></script>  
               <div id="problem">
-                
                 <div class="row g-4">
                   <div class="col-auto">
                     <h2 class="h5 mb-3 text-secondary">条件設定</h2>
@@ -74,6 +76,7 @@
                     </div>
                   </div>
                 </div>
+                <div id="solve-error" class="text-center alert alert-danger" role="alert" hidden></div>
                 <button id="grid-solve" class="btn btn-primary w-100" style="margin-top:40px;">解答生成</button>
         </div>
         <div id="result" class="mt-4"></div>
