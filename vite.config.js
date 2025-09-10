@@ -1,3 +1,4 @@
+import htmlMinify from 'vite-plugin-html-minify';
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
 
@@ -35,5 +36,8 @@ export default defineConfig({
 		'Cross-Origin-Opener-Policy': 'same-origin',
 		'Cross-Origin-Embedder-Policy': 'require-corp'
 		}
-	}
+	},
+	plugins: [
+		htmlMinify()
+	],
 });

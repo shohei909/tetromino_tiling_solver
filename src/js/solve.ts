@@ -5,42 +5,137 @@ import { renderSolutionCanvas } from './export';
 (window as any).global = window;
 
 let currentSolver = null;
+let rotationData = {
+    'I': [
+        [
+            [1,1,1,1],
+            [0,0,0,0],
+            [0,0,0,0],
+            [0,0,0,0],
+        ], // 0度
+        [
+            [1,0,0,0],
+            [1,0,0,0],
+            [1,0,0,0], 
+            [1,0,0,0],
+        ], // 90度
+    ],
+    'O': [
+        [
+            [1,1,0,0],
+            [1,1,0,0],
+            [0,0,0,0],
+            [0,0,0,0],
+        ], // 0度
+    ],
+    'T': [
+        [
+            [0,1,0,0],
+            [1,1,1,0],
+            [0,0,0,0],
+            [0,0,0,0],
+        ], // 0度
+        [
+            [1,0,0,0],
+            [1,1,0,0],
+            [1,0,0,0],
+            [0,0,0,0],
+        ], // 90度
+        [
+            [1,1,1,0],
+            [0,1,0,0],
+            [0,0,0,0],
+            [0,0,0,0],
+        ], // 180度
+        [
+            [0,1,0,0],
+            [1,1,0,0],
+            [0,1,0,0],
+            [0,0,0,0],
+        ], // 270度
+    ],
+    'S': [
+        [
+            [0,1,1,0],
+            [1,1,0,0],
+            [0,0,0,0],
+            [0,0,0,0],
+        ], // 0度
+        [
+            [1,0,0,0],
+            [1,1,0,0],
+            [0,1,0,0],
+            [0,0,0,0],
+        ], // 90度
+    ],
+    'Z': [
+        [
+            [1,1,0,0],
+            [0,1,1,0],
+            [0,0,0,0],
+            [0,0,0,0],
+        ], // 0度
+        [
+            [0,1,0,0],
+            [1,1,0,0],
+            [1,0,0,0],
+            [0,0,0,0],
+        ], // 90度
+    ],
+    'J': [
+        [
+            [1,0,0,0],
+            [1,1,1,0],
+            [0,0,0,0],
+            [0,0,0,0],
+        ], // 0度
+        [
+            [1,1,0,0],
+            [1,0,0,0],
+            [1,0,0,0],
+            [0,0,0,0],
+        ], // 90度
+        [
+            [1,1,1,0],
+            [0,0,1,0],
+            [0,0,0,0],
+            [0,0,0,0],
+        ], // 180度
+        [
+            [0,1,0,0],
+            [0,1,0,0],
+            [1,1,0,0],
+            [0,0,0,0],
+        ], // 270度
+    ],
+    'L': [
+        [
+            [0,0,1,0],
+            [1,1,1,0],
+            [0,0,0,0],
+            [0,0,0,0],
+        ], // 0度
+        [
+            [1,0,0,0],
+            [1,0,0,0],
+            [1,1,0,0],
+            [0,0,0,0],
+        ], // 90度
+        [
+            [1,1,1,0],
+            [1,0,0,0],
+            [0,0,0,0],
+            [0,0,0,0],
+        ], // 180度
+        [
+            [1,1,0,0],
+            [0,1,0,0],
+            [0,1,0,0],
+            [0,0,0,0],
+        ], // 270度
+    ],
+};
 
-    let rotationData = {
-        'I': [
-            [[0,0], [0,1], [0,2], [0,3]], // 0度
-            [[0,0], [1,0], [2,0], [3,0]]  // 90度
-        ],
-        'O': [
-            [[0,0], [0,1], [1,0], [1,1]]  // 0度（回転なし）
-        ],
-        'T': [
-            [[0,0], [0,1], [0,2], [1,1]], // 0度
-            [[0,1], [1,0], [1,1], [2,1]], // 90度
-            [[1,0], [1,1], [1,2], [0,1]], // 180度
-            [[0,0], [1,0], [1,1], [2,0]]  // 270度
-        ],
-        'S': [
-            [[0,1], [0,2], [1,0], [1,1]], // 0度
-            [[0,0], [1,0], [1,1], [2,1]]  // 90度
-        ],
-        'Z': [
-            [[0,0], [0,1], [1,1], [1,2]], // 0度
-            [[0,1], [1,0], [1,1], [2,0]]  // 90度
-        ],
-        'J': [
-            [[0,0],[1,0],[1,1],[1,2]], // 0度
-            [[0,0],[0,1],[1,0],[2,0]], // 90度
-            [[0,0],[0,1],[0,2],[1,2]], // 180度
-            [[0,1],[1,1],[2,0],[2,1]]  // 270度
-        ],
-        'L': [
-            [[0,0],[0,1],[0,2],[1,0]], // 0度
-            [[0,0],[1,0],[2,0],[2,1]], // 90度
-            [[0,2],[1,0],[1,1],[1,2]], // 180度
-            [[0,0],[0,1],[1,1],[2,1]]  // 270度
-        ],   
-    }
 export async function solvePacking(grid: boolean[][], minos: {id: MinoKind, min: number, max: number}[]) {
     let resultDiv = document.getElementById('result')!;
     let errorDiv  = document.getElementById('solve-error')!;
@@ -105,33 +200,24 @@ export async function solvePacking(grid: boolean[][], minos: {id: MinoKind, min:
     }
     
     // 各マスにどのIndex値のミノが入るかを表すInt型変数を定義
-    const minoIndex: Arith<any>[][] = [];
+    const cellArray = context.Array.const(`cellArray`, context.Int.sort(), context.Int.sort());
     for (let r = 0; r < rows + 3; r++) {
-        minoIndex[r] = [];
         for (let c = 0; c < cols + 3; c++) {
-            minoIndex[r][c] = context.Int.const(`minoIndex_${r}_${c}`);
             if (
                 r >= rows || c >= cols ||
                 grid[r][c]
             ) {
                 // 黒マスは -1
-                solver.add(minoIndex[r][c].eq(-1));
+                let cellValue = context.Select(cellArray, r * (cols + 3) + c);
+                solver.add(cellValue.eq(-1));
             } else {
                 // 白マスは minoInfos のいずれか
+                let cellValue = context.Select(cellArray, r * (cols + 3) + c);
                 solver.add(context.And(
-                    minoIndex[r][c].ge(0),
-                    minoIndex[r][c].le(minoInfos.length - 1)
+                    cellValue.ge(0),
+                    cellValue.le(minoInfos.length - 1)
                 ));
             }
-        }
-    }
-
-    // Z3上で座標(r,c)のminoIndex値を返す関数を定義
-    // Z3のFunction型（Int, Int → Int）
-    const minoIndexFunc = context.Function.declare('getMinoIndex', context.Int.sort(), context.Int.sort(), context.Int.sort());
-    for (let r = 0; r < rows + 3; r++) {
-        for (let c = 0; c < cols + 3; c++) {
-            solver.add(context.Eq(minoIndexFunc.call(r, c), minoIndex[r][c]));
         }
     }
 
@@ -144,7 +230,8 @@ export async function solvePacking(grid: boolean[][], minos: {id: MinoKind, min:
         const cells: any[] = [];
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                cells.push(context.Eq(minoIndex[r][c], i));
+                let cellValue = context.Select(cellArray, r * (cols + 3) + c);
+                cells.push(cellValue.eq(i));
             }
         }
         // そのミノの使われているマス数が4つだけ
@@ -187,24 +274,113 @@ export async function solvePacking(grid: boolean[][], minos: {id: MinoKind, min:
 
         // ミノの形状に合わせたマスの制約
         let conditions:(Bool<any> | boolean)[] = [];
-        conditions.push(context.Eq(rot, -1)); // 未使用時は制約なし
-        for (let id = 0; id < rotationData[mino.id].length; id++)
+        for (let [rotIndex, rotationTable] of rotationData[mino.id].entries())
         {
-            let rotConditions = [context.Eq(rot, id)];
-            for (const [offsetX, offsetY] of rotationData[mino.id][id]) {
-                rotConditions.push(
-                    context.Eq(
-                        minoIndexFunc.call(x.add(offsetX), y.add(offsetY)),
-                        i
-                    )
-                );
+            for (let offsetX = 0; offsetX < rotationTable.length; offsetX++)
+            {
+                let rotationRow = rotationTable[offsetX];
+                for (let offsetY = 0; offsetY < rotationRow.length; offsetY++)
+                {
+                    let rotationValue = rotationRow[offsetY];
+                    let cellValue = context.Select(cellArray, x.add(offsetX).mul(cols + 3).add(y.add(offsetY)));
+                    if (rotationValue == 1)
+                    {
+                        solver.add(
+                            context.Or(
+                                context.Eq(rot, rotIndex).not(),
+                                context.Eq(cellValue, i)
+                            )
+                        );
+                    }
+                    else
+                    {
+                        solver.add(
+                            context.Or(
+                                context.Eq(rot, rotIndex).not(),
+                                context.Eq(cellValue, i).not()
+                            )
+                        );
+                    }
+                }
             }
-            conditions.push(context.And(...rotConditions));
         }
-        solver.add(context.Or(...conditions));
         minoPlaced.push(rot.ge(0));
+        
+        if (i >= 1 && mino.id === minoInfos[i - 1].id)
+        {
+            // 同じミノが連続している場合、Indexが小さい方を優先する（対称性の排除）
+            let prev_rot = minoRot[i - 1];
+            solver.add(context.Or(
+                rot.ge(0),
+                context.And(
+                    rot.eq(-1),
+                    prev_rot.eq(-1)
+                )
+            ));
+            // 同じミノが連続している場合、Indexが小さい方を先に置く（対称性の排除）
+            let prev_x = minoX[i - 1];
+            let prev_y = minoY[i - 1];
+            solver.add(context.GT(
+                x.mul(cols + 3).add(y),
+                prev_x.mul(cols + 3).add(prev_y)
+            ));
+        }
     }
     solver.add(context.PbGe(minoPlaced as [any, ...any[]], Array(minoPlaced.length).fill(1) as [number, ...number[]], Math.round(emptyCount / 4)));
+
+    // 必須ではない高速化用の制約
+    // 隣接マス1つから3つまでが必ずつながっている必要がある
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            if (!grid[r][c]) {
+                // 白マスは minoInfos のいずれか
+                let cellValue = context.Select(cellArray, r * (cols + 3) + c);
+                let neighbors = [];
+                for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]])
+                {
+                    if (
+                        r + dr >= 0 && r + dr < rows &&
+                        c + dc >= 0 && c + dc < cols &&
+                        !grid[r + dr][c + dc]) 
+                    {
+                        neighbors.push(context.Select(cellArray, (r + dr) * (cols + 3) + (c + dc)));
+                    }
+                }
+                if (neighbors.length == 0)
+                {
+                    resultDiv.textContent = "";
+                    errorDiv.hidden = false;
+                    errorDiv.innerHTML += '<div>孤立しているマスがあります</div>';
+                    failed = true;
+                    return;
+                }
+                // 自分と同じ値の隣接マスが1つ以上必要
+                solver.add(context.Or(...neighbors.map(n => n.eq(cellValue))));
+                // 自分と同じ値の隣接マスが4つ以上あることはない
+                if (neighbors.length >= 4)
+                {
+                    solver.add(context.And(...neighbors.map(n => n.eq(cellValue))).not());
+                }
+            }
+        }
+    }
+    // 4マス以上離れた同じミノは置けない
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            if (grid[r][c]) continue;
+            for (let r2 = 0; r2 < rows; r2++) {
+                for (let c2 = 0; c2 < cols; c2++) {
+                    if (grid[r2][c2]) continue;
+                    let distance = Math.abs(r - r2) + Math.abs(c - c2);
+                    if (distance === 4) {
+                        let cellValue1 = context.Select(cellArray, r * (cols + 3) + c);
+                        let cellValue2 = context.Select(cellArray, r2 * (cols + 3) + c2);
+                        solver.add(cellValue1.eq(cellValue2).not());
+                    }
+                }
+            }
+        }
+    }
 
     resultDiv.textContent = '計算中...';
     solver.set('timeout', 20000);
@@ -217,7 +393,8 @@ export async function solvePacking(grid: boolean[][], minos: {id: MinoKind, min:
         for (let r = 0; r < rows; r++) {
             solution[r] = [];
             for (let c = 0; c < cols; c++) {
-                solution[r][c] = parseInt(model.eval(minoIndex[r][c]).toString());
+                let cellValue = context.Select(cellArray, r * (cols + 3) + c);
+                solution[r][c] = parseInt(model.eval(cellValue).toString());
             }
         }
         for (const [i, mino] of minoInfos.entries()) {
