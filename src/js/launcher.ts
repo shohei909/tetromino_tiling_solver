@@ -121,6 +121,10 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
         }
     }
 
+    // 中断ボタンを表示
+    let abortButton = document.getElementById('abort-button')!;
+    abortButton.hidden = false;
+
     // 最大8並列で問題を解く
     let threads = 0;
     for (let i = 0; i < 8; i++)
@@ -165,6 +169,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
     }
     messageDiv.textContent = '完了しました';
     usingMarker = null;
+    abortButton.hidden = true;
 }
 
 export function abortPacking()
@@ -173,7 +178,10 @@ export function abortPacking()
     if (usingMarker != null) 
     {
         usingMarker = null;
-        let messageDiv = document.getElementById('result')!;
+        let messageDiv = document.getElementById('solve-message')!;
         messageDiv.textContent = '中断しました';
+
+        let abortButton = document.getElementById('abort-button')!;
+        abortButton.hidden = true;
     }
 }

@@ -9,7 +9,7 @@
   <title>逆引きテトリス</title>
 </head>
 <body class="bg-light">
-  <div style="min-width:500px;margin:40px 10px 0 10px; margin:10px;padding:24px;" class="bg-white rounded shadow-sm">
+  <div style="minus-width:500px;margin:40px 10px 0 10px; margin:10px;padding:24px;" class="bg-white rounded shadow-sm">
     <h1 class="text-center mb-4">逆引きテトリス</h1>
     <div class="text-center form-text mb-4">あたえられた地形に7種類のミノを敷き詰めます</div>
     <div id="alert" class="text-center alert alert-danger" role="alert" hidden></div>
@@ -42,43 +42,43 @@
           <div class="mb-4" style="margin:40px">
             <h3 class="h6 mb-2 text-secondary" style="margin:50px 0px;">+ 余分に使用するミノ（前巡からの持ちこしなど）</h3>
             <div class="mb-2 d-flex gap-2">
-              <button id="max-zero" class="btn btn-outline-secondary btn-sm">すべて0にする</button>
+              <button id="plus-zero" class="btn btn-outline-secondary btn-sm">すべて0にする</button>
             </div>
             <div id="mino-maxs" class="row g-2">
               <div class="col-auto text-center"><img src="img/I.png" alt="I" class="mb-1"><br><input type="number"
-                  id="max-I" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-I" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/O.png" alt="O" class="mb-1"><br><input type="number"
-                  id="max-O" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-O" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/T.png" alt="T" class="mb-1"><br><input type="number"
-                  id="max-T" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-T" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/S.png" alt="S" class="mb-1"><br><input type="number"
-                  id="max-S" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-S" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/Z.png" alt="Z" class="mb-1"><br><input type="number"
-                  id="max-Z" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-Z" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/J.png" alt="J" class="mb-1"><br><input type="number"
-                  id="max-J" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-J" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/L.png" alt="L" class="mb-1"><br><input type="number"
-                  id="max-L" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-L" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
             </div>
             <h3 class="h6 mb-2 text-secondary" style="margin:50px 0px;">- 使用を減らすミノ（次巡に残すなど）</h3>
             <div class="mb-2 d-flex gap-2">
-              <button id="min-zero" class="btn btn-outline-secondary btn-sm">すべて0にする</button>
+              <button id="minus-zero" class="btn btn-outline-secondary btn-sm">すべて0にする</button>
             </div>
             <div id="mino-mins" class="row g-2">
               <div class="col-auto text-center"><img src="img/I.png" alt="I" class="mb-1"><br><input type="number"
-                  id="min-I" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-I" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/O.png" alt="O" class="mb-1"><br><input type="number"
-                  id="min-O" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-O" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/T.png" alt="T" class="mb-1"><br><input type="number"
-                  id="min-T" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-T" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/S.png" alt="S" class="mb-1"><br><input type="number"
-                  id="min-S" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-S" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/Z.png" alt="Z" class="mb-1"><br><input type="number"
-                  id="min-Z" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-Z" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/J.png" alt="J" class="mb-1"><br><input type="number"
-                  id="min-J" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-J" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/L.png" alt="L" class="mb-1"><br><input type="number"
-                  id="min-L" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-L" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
             </div>
           </div>
         </div>
@@ -88,6 +88,7 @@
       <div class="text-center form-text mb-4">※ ライン消去は考慮してません<br />※ セットアップ率は計算してないので、実際に組める確率が0%の可能性もあります</div>
     </div>
     <div id="solve-message" role="alert" style="margin:10px;"></div>
+    <button id="abort-button" class="btn btn-danger" hidden>中断</button>
     <div id="solve-result" class="row g-4" style="margin:10px;"></div>
   </div>
 </body>

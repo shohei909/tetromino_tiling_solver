@@ -5,7 +5,7 @@ import '../scss/style.scss'
 // Import all of Bootstrap's JS
 // @ts-ignore
 import * as bootstrap from 'bootstrap'
-import { launchPacking } from './launcher';
+import { abortPacking, launchPacking } from './launcher';
 
 let grid: boolean[][] = [];
 const maxCanvasWidth = 900;
@@ -132,6 +132,8 @@ window.addEventListener('DOMContentLoaded', () => {
 		}));
 		await launchPacking(grid, minos);
 	};
+	const abortBtn = document.getElementById('abort-button');
+	if (abortBtn) abortBtn.onclick = () => { abortPacking(); };
 
 	const fillWhiteBtn = document.getElementById('fill-white');
 	if (fillWhiteBtn) fillWhiteBtn.onclick = () => {
@@ -159,46 +161,18 @@ window.addEventListener('DOMContentLoaded', () => {
 	};
 	const minoIds = ['I','O','T','S','Z','J','L'];
 	// 下限数ボタン
-	const minZeroBtn = document.getElementById('min-zero');
-	if (minZeroBtn) minZeroBtn.onclick = () => {
+	const minusZeroBtn = document.getElementById('minus-zero');
+	if (minusZeroBtn) minusZeroBtn.onclick = () => {
 		for (const id of minoIds) {
-			const input = document.getElementById('min-' + id) as HTMLInputElement;
+			const input = document.getElementById('minus-' + id) as HTMLInputElement;
 			if (input) input.value = '0';
 		}
 	};
-	const minPlusBtn = document.getElementById('min-plus');
-	if (minPlusBtn) minPlusBtn.onclick = () => {
+	const plusZeroBtn = document.getElementById('plus-zero');
+	if (plusZeroBtn) plusZeroBtn.onclick = () => {
 		for (const id of minoIds) {
-			const input = document.getElementById('min-' + id) as HTMLInputElement;
-			if (input) input.value = String(Number(input.value) + 1);
-		}
-	};
-	const minMinusBtn = document.getElementById('min-minus');
-	if (minMinusBtn) minMinusBtn.onclick = () => {
-		for (const id of minoIds) {
-			const input = document.getElementById('min-' + id) as HTMLInputElement;
-			if (input) input.value = String(Math.max(0, Number(input.value) - 1));
-		}
-	};
-	const maxZeroBtn = document.getElementById('max-zero');
-	if (maxZeroBtn) maxZeroBtn.onclick = () => {
-		for (const id of minoIds) {
-			const input = document.getElementById('max-' + id) as HTMLInputElement;
+			const input = document.getElementById('plus-' + id) as HTMLInputElement;
 			if (input) input.value = '0';
-		}
-	};
-	const maxPlusBtn = document.getElementById('max-plus');
-	if (maxPlusBtn) maxPlusBtn.onclick = () => {
-		for (const id of minoIds) {
-			const input = document.getElementById('max-' + id) as HTMLInputElement;
-			if (input) input.value = String(Number(input.value) + 1);
-		}
-	};
-	const maxMinusBtn = document.getElementById('max-minus');
-	if (maxMinusBtn) maxMinusBtn.onclick = () => {
-		for (const id of minoIds) {
-			const input = document.getElementById('max-' + id) as HTMLInputElement;
-			if (input) input.value = String(Math.max(0, Number(input.value) - 1));
 		}
 	};
 });
