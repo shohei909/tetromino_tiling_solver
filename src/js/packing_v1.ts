@@ -1,4 +1,4 @@
-import type { Arith, Z3HighLevel } from "z3-solver";
+import type { Arith, Bool, Z3HighLevel } from "z3-solver";
 let rotationData = {
     'I': [
         [
@@ -138,18 +138,24 @@ let rotationData2 = {
     'J': convertRotationData(rotationData['J']),
     'L': convertRotationData(rotationData['L']),
 }
-function convertRotationData(rotationData: number[][][]): {x: number, y: number}[][] {
-    let result: {x: number, y: number}[][] = [];
+type FormData = {
+    blocks:{x: number, y: number}[],
+    checkerboardParity: boolean
+}
+function convertRotationData(rotationData: number[][][]): FormData[] {
+    let result: FormData[] = [];
     for (const rotation of rotationData) {
         let blocks: {x: number, y: number}[] = [];
+        let checkerboardParity = 0;
         for (let y = 0; y < rotation.length; y++) {
             for (let x = 0; x < rotation[y].length; x++) {
                 if (rotation[y][x] === 1) {
                     blocks.push({x, y});
+                    checkerboardParity += x + y;
                 }
             }
         }
-        result.push(blocks);
+        result.push({blocks, checkerboardParity: checkerboardParity % 2 === 1});
     }
     return result;
 }
@@ -161,22 +167,37 @@ export async function startPacking_v1(
     onFinished:()=>void
 )
 {
-    const contextName = String(Math.floor(Math.random() * 1e9));
-    const context = z3.Context(contextName);
-    const solver = new context.Solver();
     const rows = grid.length;
     const cols = grid[0]?.length || 0;
     let minoCount = 0;
     minos.forEach(v => minoCount += v);
+
+    // パリティを算出
+    var checkerboardParity = false;
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            if (!grid[r][c]) {
+                checkerboardParity = checkerboardParity !== ((r + c) % 2 === 1);
+            }
+        }
+    }
+
+    // Z3 Context, Solverの生成
+
+    const contextName = String(Math.floor(Math.random() * 1e9));
+    const context = z3.Context(contextName);
+    const solver = new context.Solver();
     
     // 各ブロックの座標の変数を定義
-    const blocks: {x: Arith<any>, y: Arith<any>}[][] = [];
+    const checkerboardParities:Bool<any>[] = [];
+    const blocks: {mino:{x: Arith<any>, y: Arith<any>}[]}[] = [];
     const minoKinds: MinoKind[] = [];
     let index = -1;
     for (const [minoId, count] of minos.entries()) {
         for (let repeat = 0; repeat < count; repeat++) {
             minoKinds.push(minoId);
             const mino: {x: Arith<any>, y: Arith<any>}[] = [];
+            let checkerboardParity = context.Bool.const(`checkerboardParity_${index}`);
             for (let block = 0; block < 4; block++)
             {
                 index += 1;
@@ -191,25 +212,29 @@ export async function startPacking_v1(
             let or = [];
             for (const form of rotationData2[minoId]) {
                 let and = [];
+                and.push(checkerboardParity.eq(form.checkerboardParity));
                 for (let i = 1; i < 4; i++)
                 {
-                    let dx = form[i].x - form[0].x;
-                    let dy = form[i].y - form[0].y;
+                    let dx = form.blocks[i].x - form.blocks[0].x;
+                    let dy = form.blocks[i].y - form.blocks[0].y;
                     and.push(mino[i].x.eq(mino[0].x.add(dx)));
                     and.push(mino[i].y.eq(mino[0].y.add(dy)));
                 }
-                console.log(form);
                 or.push(context.And(...and));
             }
             solver.add(context.Or(...or));
-            blocks.push(mino);
+            blocks.push({ mino });
+            checkerboardParities.push(checkerboardParity);
         }
     }
+    // @ts-ignore
+    solver.add(context.Xor(...checkerboardParities).eq(checkerboardParity));
+
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
             if (!grid[r][c]) {
                 for (const mino of blocks) {
-                    for (const block of mino) {
+                    for (const block of mino.mino) {
                         solver.add(
                             context.Or(
                                 block.x.eq(c).not(),
@@ -221,7 +246,7 @@ export async function startPacking_v1(
             } else {
                 let matches = []
                 for (const mino of blocks) {
-                    for (const block of mino) {
+                    for (const block of mino.mino) {
                         matches.push(context.And(
                             block.x.eq(c),
                             block.y.eq(r)
@@ -229,7 +254,7 @@ export async function startPacking_v1(
                     }
                 }
                 // 灰色マスは minos のいずれかと一致する
-                context.PbEq(matches as [any, ...any[]], Array(matches.length).fill(1) as [number, ...number[]], 1);
+                solver.add(context.PbEq(matches as [any, ...any[]], Array(matches.length).fill(1) as [number, ...number[]], 1));
             }
         }
     }
@@ -246,7 +271,7 @@ export async function startPacking_v1(
                 }
             }
             for (const [minoIndex, mino] of blocks.entries()) {
-                for (const block of mino) {
+                for (const block of mino.mino) {
                     let x = parseInt(model.eval(block.x).toString(), 10);
                     let y = parseInt(model.eval(block.y).toString(), 10);
                     solution[y][x] = minoIndex;

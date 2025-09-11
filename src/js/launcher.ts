@@ -140,7 +140,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
         if (usingMarker != currentMarker) { return; }
         threads += 1;
         let problem = problems.pop()!
-        startPacking_v0(
+        startPacking_v1(
             z3, 
             grid,
             problem,
