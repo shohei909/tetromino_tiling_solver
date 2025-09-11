@@ -130,34 +130,36 @@ let rotationData = {
     ],
 };
 let rotationData2 = {
-    'I': convertRotationData(rotationData['I']),
-    'O': convertRotationData(rotationData['O']),
-    'T': convertRotationData(rotationData['T']),
-    'S': convertRotationData(rotationData['S']),
-    'Z': convertRotationData(rotationData['Z']),
-    'J': convertRotationData(rotationData['J']),
-    'L': convertRotationData(rotationData['L']),
+    'I': convertRotationData(rotationData['I'], false),
+    'O': convertRotationData(rotationData['O'], false),
+    'T': convertRotationData(rotationData['T'], true ),
+    'S': convertRotationData(rotationData['S'], false),
+    'Z': convertRotationData(rotationData['Z'], false),
+    'J': convertRotationData(rotationData['J'], false),
+    'L': convertRotationData(rotationData['L'], false),
+}
+type RotationData = {
+    forms:FormData[],
+    checkerboardParity: boolean
 }
 type FormData = {
     blocks:{x: number, y: number}[],
-    checkerboardParity: boolean
+    
 }
-function convertRotationData(rotationData: number[][][]): FormData[] {
-    let result: FormData[] = [];
+function convertRotationData(rotationData: number[][][], checkerboardParity:boolean): RotationData {
+    let forms: FormData[] = [];
     for (const rotation of rotationData) {
         let blocks: {x: number, y: number}[] = [];
-        let checkerboardParity = 0;
         for (let y = 0; y < rotation.length; y++) {
             for (let x = 0; x < rotation[y].length; x++) {
                 if (rotation[y][x] === 1) {
                     blocks.push({x, y});
-                    checkerboardParity += x + y;
                 }
             }
         }
-        result.push({blocks, checkerboardParity: checkerboardParity % 2 === 1});
+        forms.push({blocks});
     }
-    return result;
+    return {forms, checkerboardParity };
 }
 export async function startPacking_v1(
     z3:Z3HighLevel, 
@@ -173,17 +175,27 @@ export async function startPacking_v1(
     minos.forEach(v => minoCount += v);
 
     // パリティを算出
-    var checkerboardParity = false;
+    var checkerboardParity = 0;
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
             if (!grid[r][c]) {
-                checkerboardParity = checkerboardParity !== ((r + c) % 2 === 1);
+                checkerboardParity += r + c;
             }
         }
     }
+    // ミノと市松パリティが一致するか
+    for (const [minoId, count] of minos.entries()) {
+        if (rotationData2[minoId].checkerboardParity)
+        {
+            checkerboardParity += count;
+        }
+    }
+    if (checkerboardParity % 2 !== 0) {
+        onFinished();
+        return; // 解なし
+    }
 
     // Z3 Context, Solverの生成
-
     const contextName = String(Math.floor(Math.random() * 1e9));
     const context = z3.Context(contextName);
     const solver = new context.Solver();
@@ -197,7 +209,6 @@ export async function startPacking_v1(
         for (let repeat = 0; repeat < count; repeat++) {
             minoKinds.push(minoId);
             const mino: {x: Arith<any>, y: Arith<any>}[] = [];
-            let checkerboardParity = context.Bool.const(`checkerboardParity_${index}`);
             for (let block = 0; block < 4; block++)
             {
                 index += 1;
@@ -210,9 +221,8 @@ export async function startPacking_v1(
                 mino.push({x, y});
             }
             let or = [];
-            for (const form of rotationData2[minoId]) {
+            for (const form of rotationData2[minoId].forms) {
                 let and = [];
-                and.push(checkerboardParity.eq(form.checkerboardParity));
                 for (let i = 1; i < 4; i++)
                 {
                     let dx = form.blocks[i].x - form.blocks[0].x;
@@ -224,11 +234,8 @@ export async function startPacking_v1(
             }
             solver.add(context.Or(...or));
             blocks.push({ mino });
-            checkerboardParities.push(checkerboardParity);
         }
     }
-    // @ts-ignore
-    solver.add(context.Xor(...checkerboardParities).eq(checkerboardParity));
 
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
