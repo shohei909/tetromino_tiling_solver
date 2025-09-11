@@ -1,6 +1,7 @@
 import { init, type Arith, type Bool, type Z3HighLevel, type Z3LowLevel } from 'z3-solver';
 import { renderSolutionCanvas } from './export';
 import { startPacking_v0 } from './packing_v0';
+import { startPacking_v1 } from './packing_v1';
 
 (window as any).global = window;
 let usingMarker:null|{} = null;
