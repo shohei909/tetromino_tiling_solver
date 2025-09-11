@@ -168,27 +168,7 @@ export async function startPacking_v1(
     const cols = grid[0]?.length || 0;
     let minoCount = 0;
     minos.forEach(v => minoCount += v);
-
-    // 各マスにどのブロックが入るかを表すInt型変数を定義
-    const cellArray = context.Array.const(`cellArray`, context.Int.sort(), context.Int.sort());
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            console.log(r, c, grid[r][c]);
-            if (!grid[r][c]) {
-                // 白マスは -1
-                let cellValue = context.Select(cellArray, r * cols + c);
-                solver.add(cellValue.eq(-1));
-            } else {
-                // 灰色マスは minos のいずれか
-                let cellValue = context.Select(cellArray, r * cols + c);
-                solver.add(context.And(
-                    cellValue.ge(0),
-                    cellValue.le(minoCount * 4 - 1)
-                ));
-            }
-        }
-    }
-
+    
     // 各ブロックの座標の変数を定義
     const blocks: {x: Arith<any>, y: Arith<any>}[][] = [];
     const minoKinds: MinoKind[] = [];
@@ -196,7 +176,6 @@ export async function startPacking_v1(
     for (const [minoId, count] of minos.entries()) {
         for (let repeat = 0; repeat < count; repeat++) {
             minoKinds.push(minoId);
-
             const mino: {x: Arith<any>, y: Arith<any>}[] = [];
             for (let block = 0; block < 4; block++)
             {
@@ -207,13 +186,8 @@ export async function startPacking_v1(
                 solver.add(x.le(cols - 1));
                 solver.add(y.ge(0));
                 solver.add(y.le(rows - 1));
-                
-                // マス目との対応付け
-                solver.add(context.Select(cellArray, x.add(y.mul(cols))).eq(index));
-
                 mino.push({x, y});
             }
-            
             let or = [];
             for (const form of rotationData2[minoId]) {
                 let and = [];
@@ -231,7 +205,34 @@ export async function startPacking_v1(
             blocks.push(mino);
         }
     }
-
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            if (!grid[r][c]) {
+                for (const mino of blocks) {
+                    for (const block of mino) {
+                        solver.add(
+                            context.Or(
+                                block.x.eq(c).not(),
+                                block.y.eq(r).not()
+                            )
+                        );
+                    }
+                }
+            } else {
+                let matches = []
+                for (const mino of blocks) {
+                    for (const block of mino) {
+                        matches.push(context.And(
+                            block.x.eq(c),
+                            block.y.eq(r)
+                        ));
+                    }
+                }
+                // 灰色マスは minos のいずれかと一致する
+                context.PbEq(matches as [any, ...any[]], Array(matches.length).fill(1) as [number, ...number[]], 1);
+            }
+        }
+    }
     for (let i = 0; i < 5000; i++) 
     {
         const sat = await solver.check();
@@ -241,8 +242,14 @@ export async function startPacking_v1(
             for (let r = 0; r < rows; r++) {
                 solution[r] = [];
                 for (let c = 0; c < cols; c++) {
-                    let cellValue = model.eval(context.Select(cellArray, r * cols + c));
-                    solution[r][c] = Math.floor(parseInt(cellValue.toString(), 10) / 4);
+                    solution[r][c] = -1;
+                }
+            }
+            for (const [minoIndex, mino] of blocks.entries()) {
+                for (const block of mino) {
+                    let x = parseInt(model.eval(block.x).toString(), 10);
+                    let y = parseInt(model.eval(block.y).toString(), 10);
+                    solution[y][x] = minoIndex;
                 }
             }
             onSolved(minoKinds, solution);
