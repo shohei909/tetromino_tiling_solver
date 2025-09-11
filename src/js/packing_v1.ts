@@ -130,36 +130,37 @@ let rotationData = {
     ],
 };
 let rotationData2 = {
-    'I': convertRotationData(rotationData['I'], false),
-    'O': convertRotationData(rotationData['O'], false),
-    'T': convertRotationData(rotationData['T'], true ),
-    'S': convertRotationData(rotationData['S'], false),
-    'Z': convertRotationData(rotationData['Z'], false),
-    'J': convertRotationData(rotationData['J'], false),
-    'L': convertRotationData(rotationData['L'], false),
+    'I': convertRotationData(rotationData['I']),
+    'O': convertRotationData(rotationData['O']),
+    'T': convertRotationData(rotationData['T']),
+    'S': convertRotationData(rotationData['S']),
+    'Z': convertRotationData(rotationData['Z']),
+    'J': convertRotationData(rotationData['J']),
+    'L': convertRotationData(rotationData['L']),
 }
 type RotationData = {
-    forms:FormData[],
-    checkerboardParity: boolean
+    forms:FormData[]
 }
 type FormData = {
     blocks:{x: number, y: number}[],
-    
+    verticalParity: boolean
 }
-function convertRotationData(rotationData: number[][][], checkerboardParity:boolean): RotationData {
+function convertRotationData(rotationData: number[][][]): RotationData {
     let forms: FormData[] = [];
     for (const rotation of rotationData) {
         let blocks: {x: number, y: number}[] = [];
+        let verticalParity = 0;
         for (let y = 0; y < rotation.length; y++) {
             for (let x = 0; x < rotation[y].length; x++) {
                 if (rotation[y][x] === 1) {
                     blocks.push({x, y});
+                    verticalParity += x;
                 }
             }
         }
-        forms.push({blocks});
+        forms.push({blocks, verticalParity: verticalParity % 2 === 1});
     }
-    return {forms, checkerboardParity };
+    return { forms };
 }
 export async function startPacking_v1(
     z3:Z3HighLevel, 
@@ -174,23 +175,40 @@ export async function startPacking_v1(
     let minoCount = 0;
     minos.forEach(v => minoCount += v);
 
-    // パリティを算出
+    // 地形のパリティを算出
     var checkerboardParity = 0;
+    var verticalParity = 0;
+    var tCount = 0;
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
             if (!grid[r][c]) {
                 checkerboardParity += r + c;
+                verticalParity += c;
             }
         }
     }
-    // ミノと市松パリティが一致するか
+    // ミノのパリティを算出
     for (const [minoId, count] of minos.entries()) {
-        if (rotationData2[minoId].checkerboardParity)
+        if (minoId == 'T')
         {
+            tCount += count;
             checkerboardParity += count;
         }
+        else if (minoId == 'J' || minoId == 'L')
+        {
+            verticalParity += count;
+        }
     }
+    // 市松模様のパリティが合わない場合、解なし
     if (checkerboardParity % 2 !== 0) {
+        console.log("市松模様のパリティにより除外されました");
+        onFinished();
+        return; // 解なし
+    }
+    // Tミノの数が0で、縦方向のパリティが合わない場合、解なし
+    verticalParity %= 2;
+    if (tCount == 0 && verticalParity !== 0) {
+        console.log("Tミノの数が0で、縦方向のパリティが合わないため除外されました");
         onFinished();
         return; // 解なし
     }
@@ -201,9 +219,9 @@ export async function startPacking_v1(
     const solver = new context.Solver();
     
     // 各ブロックの座標の変数を定義
-    const checkerboardParities:Bool<any>[] = [];
     const blocks: {mino:{x: Arith<any>, y: Arith<any>}[]}[] = [];
     const minoKinds: MinoKind[] = [];
+    const verticalParities = [];
     let index = -1;
     for (const [minoId, count] of minos.entries()) {
         for (let repeat = 0; repeat < count; repeat++) {
@@ -222,19 +240,39 @@ export async function startPacking_v1(
             }
             let or = [];
             for (const form of rotationData2[minoId].forms) {
+                 // Tミノが1個だけで縦パリティが合わない場合はスキップ
+                if (tCount == 1 && minoId == 'T' && form.verticalParity != (verticalParity === 1)) { continue; }
                 let and = [];
+                let verticalParityConst = null;
+                if (tCount > 1 && minoId == 'T')
+                {
+                    verticalParityConst = context.Bool.const(`verticalParity_${index}`);
+                }
                 for (let i = 1; i < 4; i++)
                 {
                     let dx = form.blocks[i].x - form.blocks[0].x;
                     let dy = form.blocks[i].y - form.blocks[0].y;
                     and.push(mino[i].x.eq(mino[0].x.add(dx)));
                     and.push(mino[i].y.eq(mino[0].y.add(dy)));
+                    if (verticalParityConst != null)
+                    {
+                        and.push(verticalParityConst.eq(form.verticalParity));
+                        verticalParities.push(verticalParityConst);
+                    }
                 }
                 or.push(context.And(...and));
             }
             solver.add(context.Or(...or));
             blocks.push({ mino });
         }
+    }
+    if (tCount >= 2)
+    {
+        let xor = context.Xor(verticalParities[0], verticalParities[1]);
+        for (let i = 2; i < verticalParities.length; i++) {
+            xor = context.Xor(xor, verticalParities[i]);
+        }
+        solver.add(xor.eq(verticalParity === 1).not());
     }
 
     for (let r = 0; r < rows; r++) {

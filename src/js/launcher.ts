@@ -131,8 +131,6 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
     for (let i = 0; i < 8; i++)
     {
         launchSolver();
-        // 1フレーム待つ
-        await new Promise(resolve => setTimeout(resolve, 1));
     }
     function launchSolver()
     {
