@@ -5,33 +5,44 @@ import '../scss/style.scss'
 // Import all of Bootstrap's JS
 // @ts-ignore
 import * as bootstrap from 'bootstrap'
-import { solvePacking } from './solve';
+import { launchPacking } from './launcher';
 
 let grid: boolean[][] = [];
 const maxCanvasWidth = 900;
 const maxCellSize = 60;
 let cellSize = 30;
 
+let isDrawing = false;
+let drawValue: boolean | null = null;
+
 function createGrid() {
 	const rows = parseInt((document.getElementById('rows') as HTMLInputElement).value);
 	const cols = parseInt((document.getElementById('cols') as HTMLInputElement).value);
-	grid = Array.from({ length: rows }, () => Array(cols).fill(false));
+	grid = Array.from({ length: rows }, () => Array(cols).fill(true));
+	updateGrid();
+	window.addEventListener('mouseup', () => {
+		isDrawing = false;
+		drawValue = null;
+	});
+}
+
+function updateGrid() {
+	const rows = parseInt((document.getElementById('rows') as HTMLInputElement).value);
+	const cols = parseInt((document.getElementById('cols') as HTMLInputElement).value);
+
 	const gridDiv = document.getElementById('grid');
 	if (!gridDiv) return;
 	gridDiv.innerHTML = '';
+	const canvas = document.createElement('canvas');
+	gridDiv.appendChild(canvas);
+
 	// 固定幅からセルサイズを計算
 	cellSize = Math.floor(maxCanvasWidth / cols);
 	cellSize = Math.min(cellSize, maxCellSize);
-	const canvas = document.createElement('canvas');
 	canvas.width = cols * cellSize;
 	canvas.height = rows * cellSize;
 	canvas.style.border = '1px solid #888';
 	canvas.style.cursor = 'pointer';
-	gridDiv.appendChild(canvas);
-	drawGrid(canvas, grid);
-
-	let isDrawing = false;
-	let drawValue: boolean | null = null;
 
 	canvas.addEventListener('mousedown', (e) => {
 		isDrawing = true;
@@ -56,10 +67,8 @@ function createGrid() {
 			}
 		}
 	});
-	window.addEventListener('mouseup', () => {
-		isDrawing = false;
-		drawValue = null;
-	});
+	
+	drawGrid(canvas, grid);
 }
 
 function drawGrid(canvas: HTMLCanvasElement, grid: boolean[][]) {
@@ -68,18 +77,49 @@ function drawGrid(canvas: HTMLCanvasElement, grid: boolean[][]) {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	for (let r = 0; r < grid.length; r++) {
 		for (let c = 0; c < grid[r].length; c++) {
-			ctx.fillStyle = grid[r][c] ? '#474747ff' : 'white';
+			ctx.fillStyle = grid[r][c] ? '#b9b9b9ff' : 'white';
 			ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
 			ctx.strokeStyle = '#888';
 			ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
 		}
 	}
 }
+function resizeGrid() 
+{
+	const rows = parseInt((document.getElementById('rows') as HTMLInputElement).value);
+	const cols = parseInt((document.getElementById('cols') as HTMLInputElement).value);
+	while (grid.length > rows)
+	{
+		grid.shift();
+	}
+	while (grid.length < rows)
+	{
+		grid.unshift(Array(cols).fill(false));
+	}
+	if (grid.length > 0) 
+	{
+		while (grid[0].length > cols)
+		{
+			for (let r = 0; r < grid.length; r++) grid[r].pop();
+		}
+		while (grid[0].length < cols)
+		{
+			for (let r = 0; r < grid.length; r++) grid[r].push(grid[r][grid[r].length - 1]);
+		}
+	}
+	updateGrid();
+	const gridDiv = document.getElementById('grid');
+	if (gridDiv && gridDiv.firstChild instanceof HTMLCanvasElement) {
+		drawGrid(gridDiv.firstChild, grid);
+	}
+};
 
 window.addEventListener('DOMContentLoaded', () => {	
 	createGrid();
-	const btn = document.getElementById('grid-generate');
-	if (btn) btn.onclick = createGrid;
+	const rows = document.getElementById('rows');
+	if (rows) rows.onchange = resizeGrid;
+	const cols = document.getElementById('cols');
+	if (cols) cols.onchange = resizeGrid;
 
 	// grid-solve ボタンの処理
 	const solveBtn = document.getElementById('grid-solve');
@@ -87,17 +127,17 @@ window.addEventListener('DOMContentLoaded', () => {
 		const minoIds = ['I','O','T','S','Z','J','L'];
 		const minos = minoIds.map(id => ({
 			id: id as MinoKind,
-			min: Number((document.getElementById('min-' + id) as HTMLInputElement)?.value || 0),
-			max: Number((document.getElementById('max-' + id) as HTMLInputElement)?.value || 0)
+			plus : Number((document.getElementById('plus-' + id) as HTMLInputElement)?.value || 0),
+			minus: Number((document.getElementById('minus-' + id) as HTMLInputElement)?.value || 0)
 		}));
-		await solvePacking(grid, minos);
+		await launchPacking(grid, minos);
 	};
 
-	const fillBlackBtn = document.getElementById('fill-black');
-	if (fillBlackBtn) fillBlackBtn.onclick = () => {
+	const fillWhiteBtn = document.getElementById('fill-white');
+	if (fillWhiteBtn) fillWhiteBtn.onclick = () => {
 		for (let r = 0; r < grid.length; r++) {
 			for (let c = 0; c < grid[r].length; c++) {
-				grid[r][c] = true;
+				grid[r][c] = false;
 			}
 		}
 		const gridDiv = document.getElementById('grid');
@@ -105,11 +145,11 @@ window.addEventListener('DOMContentLoaded', () => {
 			drawGrid(gridDiv.firstChild, grid);
 		}
 	};
-	const fillWhiteBtn = document.getElementById('fill-white');
-	if (fillWhiteBtn) fillWhiteBtn.onclick = () => {
+	const fillGrayBtn = document.getElementById('fill-gray');
+	if (fillGrayBtn) fillGrayBtn.onclick = () => {
 		for (let r = 0; r < grid.length; r++) {
 			for (let c = 0; c < grid[r].length; c++) {
-				grid[r][c] = false;
+				grid[r][c] = true;
 			}
 		}
 		const gridDiv = document.getElementById('grid');

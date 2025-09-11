@@ -1,16 +1,19 @@
 
 // 結果Canvasの生成・描画処理
-export function renderSolutionCanvas(grid: boolean[][], solution: number[][], minoInfos: Mino[]) {
-    let resultDiv = document.getElementById('result')!;
+export function renderSolutionCanvas(grid: boolean[][], minoKinds: MinoKind[], solution: number[][]) {
+    let resultDiv = document.getElementById('solve-result')!;
 
     const rows = grid.length;
     const cols = grid[0]?.length || 0;
-    const cellSize = 30;
-    resultDiv.textContent = '';
+    const cellSize = 20;
+
+    const div = document.createElement('div');
     const canvas = document.createElement('canvas');
     canvas.width = cols * cellSize;
     canvas.height = rows * cellSize;
-    resultDiv.appendChild(canvas);
+    div.appendChild(canvas);
+    div.className = "result-canvas col-auto";
+    resultDiv.appendChild(div);
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     for (let r = 0; r < rows; r++) {
@@ -21,7 +24,7 @@ export function renderSolutionCanvas(grid: boolean[][], solution: number[][], mi
             ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
             
             const minoIndex = solution[r][c];
-            ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : minoInfos[minoIndex].id);
+            ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : minoKinds[minoIndex]);
             ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2);
         }
     }
