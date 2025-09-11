@@ -160,14 +160,16 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
 
     // 無限に待つ
     let counter = 0;
+    let time = window.performance.now();
     while (threads > 0)
     {
         await new Promise<void>(resolve => {setTimeout(resolve, 100);});
         if (usingMarker != currentMarker) { return; }
-        messageDiv.textContent = '計算中' + '.'.repeat(Math.floor(counter / 5) % 4);
+        const elapsed = ((window.performance.now() - time) / 1000).toFixed(2); // 0.1秒単位
+        messageDiv.innerHTML = '計算中' + '.'.repeat(Math.floor(counter / 5) % 4) + "<br/>" + elapsed + '秒';
         counter++;
     }
-    messageDiv.textContent = '完了しました';
+    messageDiv.textContent = '完了しました(' + ((window.performance.now() - time) / 1000).toFixed(2) + '秒)';
     usingMarker = null;
     abortButton.hidden = true;
 }
