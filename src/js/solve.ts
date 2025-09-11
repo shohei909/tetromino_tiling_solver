@@ -1,5 +1,5 @@
     
-import { init, type Arith, type Bool } from 'z3-solver';
+import { init, type Arith, type Bool, type Z3HighLevel, type Z3LowLevel } from 'z3-solver';
 import { renderSolutionCanvas } from './export';
 
 (window as any).global = window;
@@ -136,14 +136,18 @@ let rotationData = {
     ],
 };
 
+
+// Z3初期化
+let z3:Z3HighLevel & Z3LowLevel;
+
 export async function solvePacking(grid: boolean[][], minos: {id: MinoKind, min: number, max: number}[]) {
     let resultDiv = document.getElementById('result')!;
     let errorDiv  = document.getElementById('solve-error')!;
     errorDiv.hidden = true;
     errorDiv.textContent = '';
 
-    // Z3初期化
-    const z3 = await init();
+    if (z3 == null) { z3 = await init(); }
+    z3.em.PThread.terminateAllThreads();; // PThreadにアクセス可能か確認
 
     // ランダムな整数から文字列生成
     const contextName = String(Math.floor(Math.random() * 1e9));
@@ -408,3 +412,8 @@ export async function solvePacking(grid: boolean[][], minos: {id: MinoKind, min:
     }
 }
 
+function abortPacking()
+{
+    if (z3) { z3.em.PThread.terminateAllThreads(); }
+    currentSolver = null;
+}
