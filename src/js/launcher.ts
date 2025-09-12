@@ -1,6 +1,5 @@
 import { init, type Arith, type Bool, type Z3HighLevel, type Z3LowLevel } from 'z3-solver';
 import { renderSolutionCanvas } from './export';
-import { startPacking_v0 } from './packing_v0';
 import { startPacking_v1 } from './packing_v1';
 
 (window as any).global = window;
@@ -9,7 +8,7 @@ let usingMarker:null|{} = null;
 // Z3初期化
 let z3:Z3HighLevel & Z3LowLevel;
 
-// 問題を分割して、複数のソルバーに投げる
+// 問題の事前処理や分割をおこなって、複数のソルバーに投げる
 export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKind, plus: number, minus: number}[]) {
     if (z3 == null) { z3 = await init(); }
     z3.em.PThread.terminateAllThreads();; // PThreadにアクセス可能か確認
@@ -26,25 +25,41 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
     let resultDiv  = document.getElementById('solve-result')!;
     resultDiv.textContent = '';
 
-    const rows = grid.length;
-    const cols = grid[0]?.length || 0;
+    let rows = grid.length;
+    let cols = grid[0]?.length || 0;
 
     // 配置対象マスの数を数える
-    let emptyCount = 0;
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            if (grid[r][c]) {
-                emptyCount++;
+    let checkerboardParity = 0;
+    let verticalParity = 0;
+    let blockCount = 0;
+    let maxX = 0;
+    let maxY = 0;
+    let minX = cols - 1;
+    let minY = rows - 1;
+    for (let x = 0; x < cols; x++) {
+        for (let y = 0; y < rows; y++) {
+            if (grid[y][x]) {
+                blockCount++;
+                checkerboardParity += (x + y) % 2;
+                verticalParity += y % 2;
+                if (x > maxX) maxX = x;
+                if (x < minX) minX = x;
+                if (y > maxY) maxY = y;
+                if (y < minY) minY = y;
             }
         }
     }
-
+    
     // 事前チェック
     errorDiv.hidden = true;
     errorDiv.textContent = '';
     let failed = false;
-    if (emptyCount % 4 !== 0) {
-        errorDiv.innerHTML += '<div>配置対象（灰色）マスの数(' + emptyCount + ')が4の倍数ではありません</div>';
+    if (blockCount === 0) {
+        errorDiv.innerHTML += '<div>配置対象（灰色）マスが1つもありません</div>';
+        failed = true;
+    }
+    if (blockCount % 4 !== 0) {
+        errorDiv.innerHTML += '<div>配置対象（灰色）マスの数(' + blockCount + ')が4の倍数ではありません</div>';
         failed = true;
     }
     if (failed) { 
@@ -52,23 +67,67 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
         errorDiv.hidden = false;
         return; 
     }
-    messageDiv.textContent = '計算中...';
+    
+    // トリミング
+    let newGrid: boolean[][] = [];
+    for (let y = 0; y <= maxY - minY; y++) {
+        let row: boolean[] = [];
+        for (let x = 0; x <= maxX - minX; x++) {
+            row.push(grid[y + minY][x + minX]);
+        }
+        newGrid.push(row);
+    }
+    grid = newGrid;
+    rows = grid.length;
+    cols = grid[0]?.length || 0;
+    let symmetry90 = true;
+    let symmetry180 = true;
+    function getAt(x:number, y:number): boolean {
+        if (x < 0 || x >= cols || y < 0 || y >= rows) { return false; }
+        return grid[y][x];
+    }
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            if (getAt(x, y) != getAt(cols - x - 1, rows - y - 1))
+            {
+                symmetry180 = false;
+                symmetry90  = false;
+            }
+            if (getAt(x, y) != getAt(y, x))
+            {
+                symmetry90  = false;
+            }
+            if (getAt(y, x) != getAt(cols - x - 1, rows - y - 1))
+            {
+                symmetry90  = false;
+            }
+        }
+    }
+    console.log("対称性", symmetry90, symmetry180);
 
-    let emptySize = emptyCount / 4;
+    messageDiv.textContent = '計算中...';
+    let fieldMinoLength = blockCount / 4;
+    let field:SubfieldData = {
+        grid,
+        checkerboardParity: checkerboardParity % 2 === 1,
+        verticalParity: verticalParity % 2 === 1,
+        symmetryLevel: symmetry90 ? 2 : symmetry180 ? 1 : 0,
+    }
+
     let count = 0;
     let plus = minoSources.reduce((a,b) => a + b.plus, 0);
     let requiredMap: Map<MinoKind, number> = new Map();
     let notRequiredList: MinoKind[] = [];
     
     // 各ミノの情報を整理
-    while (count <= emptySize)
+    while (count <= fieldMinoLength)
     {
         for (const mino of notRequiredList) {
             requiredMap.set(mino, (requiredMap.get(mino) || 0) + 1);
         }
         notRequiredList.length = 0;
-        console.log(count, emptySize);
-        if (count === emptySize) { break; }
+        console.log(count, fieldMinoLength);
+        if (count === fieldMinoLength) { break; }
         
         // 余剰ミノの消費
         if (plus > 0)
@@ -99,7 +158,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
     // 問題の分割
     if (currentMarker != usingMarker) { return; }
     let problems:Map<MinoKind, number>[] = [];
-    let rest = emptySize - Array.from(requiredMap.values()).reduce((a,b) => a + b, 0);
+    let rest = fieldMinoLength - Array.from(requiredMap.values()).reduce((a,b) => a + b, 0);
 
     // rest個のnotRequiredListからの組み合わせを全列挙
     for (const combo of combinations(notRequiredList, rest)) {
@@ -141,12 +200,12 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
         let problem = problems.pop()!
         startPacking_v1(
             z3, 
-            grid,
+            field,
             problem,
             (minoKinds, solution) => {
                 if (usingMarker != currentMarker) { return; }
                 console.log("解が見つかりました", solution);
-                renderSolutionCanvas(grid, minoKinds, solution);
+                renderSolutionCanvas(field.grid, minoKinds, solution);
             },
             () => {
                 if (usingMarker != currentMarker) { return; }

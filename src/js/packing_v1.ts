@@ -66,30 +66,24 @@ function convertRotationData(rotationData: number[][][]): RotationData {
 }
 export async function startPacking_v1(
     z3:Z3HighLevel, 
-    grid :boolean[][], 
+    field:SubfieldData, 
     minos:Map<MinoKind, number>, 
     onSolved:(minoKinds:MinoKind[], solution:number[][])=>void,
     onFinished:()=>void
 )
 {
+    const grid = field.grid;
     const rows = grid.length;
     const cols = grid[0]?.length || 0;
     let minoCount = 0;
     minos.forEach(v => minoCount += v);
 
-    // 地形のパリティを算出
-    var checkerboardParity = 0;
-    var verticalParity = 0;
-    var tCount = 0;
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            if (!grid[r][c]) {
-                checkerboardParity += r + c;
-                verticalParity += c;
-            }
-        }
-    }
+    // 地形のパリティを取得
+    var checkerboardParity = field.checkerboardParity ? 1 : 0;
+    var verticalParity = field.verticalParity ? 1 : 0;
+
     // ミノのパリティを算出
+    var tCount = 0;
     for (const [minoId, count] of minos.entries()) {
         if (minoId == 'T')
         {
@@ -125,7 +119,10 @@ export async function startPacking_v1(
     const minoKinds: MinoKind[] = [];
     const verticalParities = [];
     let index = -1;
-    for (const [minoId, count] of minos.entries()) {
+    console.log("対称性レベル", field.symmetryLevel);
+    // 対称性の低い順に処理
+    for (const minoId of ['J','L','T','S','Z','I','O'] as MinoKind[]) {
+        let count = minos.get(minoId) || 0;
         let prevMinon = null;
         for (let repeat = 0; repeat < count; repeat++) {
             minoKinds.push(minoId);
@@ -142,9 +139,19 @@ export async function startPacking_v1(
                 mino.push({x, y});
             }
             let or = [];
-            for (const form of rotationData2[minoId].forms) {
-                 // Tミノが1個だけで縦パリティが合わない場合はスキップ
+            for (const [formIndex, form] of rotationData2[minoId].forms.entries()) {
                 if (tCount == 1 && minoId == 'T' && form.verticalParity != (verticalParity === 1)) { continue; }
+                console.log(index, field.symmetryLevel, formIndex);
+                if (index === 3) {
+                    if (field.symmetryLevel == 1 && formIndex >= 2) // 180度対称
+                    {
+                        break;
+                    }
+                    else if (field.symmetryLevel == 2 && formIndex >= 1) // 90度対称
+                    {
+                        break;
+                    }
+                }
                 let and = [];
                 let verticalParityConst = null;
                 if (tCount > 1 && minoId == 'T')
@@ -250,6 +257,22 @@ export async function startPacking_v1(
                 }
             }
             onSolved(minoKinds, solution);
+            if (field.symmetryLevel >= 1)
+            {
+                onSolved(minoKinds, solution.map(row => [...row].reverse()).reverse());  
+            }
+            if (field.symmetryLevel >= 2)
+            {
+                let newSolution:number[][] = [];    
+                for (let r = 0; r < rows; r++) {
+                    newSolution[r] = [];
+                    for (let c = 0; c < cols; c++) {
+                        newSolution[r][c] = solution[c][r];
+                    }
+                }
+                onSolved(minoKinds, newSolution.map(row => [...row]).reverse());  
+                onSolved(minoKinds, newSolution.map(row => [...row].reverse()));
+            }
             solver.add(context.Or(...bans)); // 次の解を探すため、禁止条件を追加
         }
         else
