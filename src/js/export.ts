@@ -20,7 +20,7 @@ export function renderSolutionCanvas(grid: boolean[][], minoKinds: MinoKind[], s
         for (let c = 0; c < cols; c++) {
             ctx.fillStyle = '#e0e0ff';
             ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
-            ctx.strokeStyle = '#888';
+            ctx.strokeStyle = '#b7b7b7ff';
             ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
             
             const minoIndex = solution[r][c];
@@ -39,6 +39,6 @@ function getMinoColor(minoId: string): string {
         case 'Z': return "#F44336";
         case 'J': return "#3F51B5";
         case 'L': return "#ff9100";
-        default: return '#474747';
+        default: return '#e0e0ff';
     }
 }

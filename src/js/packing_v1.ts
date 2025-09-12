@@ -1,132 +1,38 @@
 import type { Arith, Bool, Z3HighLevel } from "z3-solver";
+
 let rotationData = {
     'I': [
-        [
-            [1,1,1,1],
-            [0,0,0,0],
-            [0,0,0,0],
-            [0,0,0,0],
-        ], // 0度
-        [
-            [1,0,0,0],
-            [1,0,0,0],
-            [1,0,0,0], 
-            [1,0,0,0],
-        ], // 90度
+        [[0,0],[1,0],[2,0],[3,0]], // ━
+        [[0,0],[0,1],[0,2],[0,3]], // ❘
     ],
     'O': [
-        [
-            [1,1,0,0],
-            [1,1,0,0],
-            [0,0,0,0],
-            [0,0,0,0],
-        ], // 0度
-    ],
-    'T': [
-        [
-            [0,1,0,0],
-            [1,1,1,0],
-            [0,0,0,0],
-            [0,0,0,0],
-        ], // 0度
-        [
-            [1,0,0,0],
-            [1,1,0,0],
-            [1,0,0,0],
-            [0,0,0,0],
-        ], // 90度
-        [
-            [1,1,1,0],
-            [0,1,0,0],
-            [0,0,0,0],
-            [0,0,0,0],
-        ], // 180度
-        [
-            [0,1,0,0],
-            [1,1,0,0],
-            [0,1,0,0],
-            [0,0,0,0],
-        ], // 270度
+        [[0,0],[1,0],[0,1],[1,1]], // □
     ],
     'S': [
-        [
-            [0,1,1,0],
-            [1,1,0,0],
-            [0,0,0,0],
-            [0,0,0,0],
-        ], // 0度
-        [
-            [1,0,0,0],
-            [1,1,0,0],
-            [0,1,0,0],
-            [0,0,0,0],
-        ], // 90度
+        [[1,0],[2,0],[0,1],[1,1]], // 横
+        [[0,0],[0,1],[1,1],[1,2]], // 縦
     ],
     'Z': [
-        [
-            [1,1,0,0],
-            [0,1,1,0],
-            [0,0,0,0],
-            [0,0,0,0],
-        ], // 0度
-        [
-            [0,1,0,0],
-            [1,1,0,0],
-            [1,0,0,0],
-            [0,0,0,0],
-        ], // 90度
+        [[0,0],[1,0],[1,1],[2,1]], // 横
+        [[1,0],[0,1],[1,1],[0,2]], // 縦
+    ],
+    'T': [
+        [[1,0],[0,1],[1,1],[2,1]], // ▲
+        [[0,1],[1,0],[1,1],[1,2]], // ◀
+        [[0,0],[1,0],[2,0],[1,1]], // ▼
+        [[0,0],[0,1],[0,2],[1,1]], // ▶
     ],
     'J': [
-        [
-            [1,0,0,0],
-            [1,1,1,0],
-            [0,0,0,0],
-            [0,0,0,0],
-        ], // 0度
-        [
-            [1,1,0,0],
-            [1,0,0,0],
-            [1,0,0,0],
-            [0,0,0,0],
-        ], // 90度
-        [
-            [1,1,1,0],
-            [0,0,1,0],
-            [0,0,0,0],
-            [0,0,0,0],
-        ], // 180度
-        [
-            [0,1,0,0],
-            [0,1,0,0],
-            [1,1,0,0],
-            [0,0,0,0],
-        ], // 270度
+        [[0,0],[0,1],[1,1],[2,1]], // ▲
+        [[0,2],[1,0],[1,1],[1,2]], // ◀
+        [[0,0],[1,0],[2,0],[2,1]], // ▼
+        [[0,1],[0,0],[0,2],[1,0]], // ▶
     ],
     'L': [
-        [
-            [0,0,1,0],
-            [1,1,1,0],
-            [0,0,0,0],
-            [0,0,0,0],
-        ], // 0度
-        [
-            [1,0,0,0],
-            [1,0,0,0],
-            [1,1,0,0],
-            [0,0,0,0],
-        ], // 90度
-        [
-            [1,1,1,0],
-            [1,0,0,0],
-            [0,0,0,0],
-            [0,0,0,0],
-        ], // 180度
-        [
-            [1,1,0,0],
-            [0,1,0,0],
-            [0,1,0,0],
-            [0,0,0,0],
-        ], // 270度
+        [[2,0],[0,1],[1,1],[2,1]], // ▲
+        [[0,0],[1,0],[1,1],[1,2]], // ◀
+        [[1,0],[0,0],[2,0],[0,1]], // ▼
+        [[0,0],[0,1],[0,2],[1,2]], // ▶
     ],
 };
 let rotationData2 = {
@@ -150,13 +56,9 @@ function convertRotationData(rotationData: number[][][]): RotationData {
     for (const rotation of rotationData) {
         let blocks: {x: number, y: number}[] = [];
         let verticalParity = 0;
-        for (let y = 0; y < rotation.length; y++) {
-            for (let x = 0; x < rotation[y].length; x++) {
-                if (rotation[y][x] === 1) {
-                    blocks.push({x, y});
-                    verticalParity += x;
-                }
-            }
+        for (const [x, y] of rotation) {
+            verticalParity += x;
+            blocks.push({x, y});
         }
         forms.push({blocks, verticalParity: verticalParity % 2 === 1});
     }
@@ -224,6 +126,7 @@ export async function startPacking_v1(
     const verticalParities = [];
     let index = -1;
     for (const [minoId, count] of minos.entries()) {
+        let prevMinon = null;
         for (let repeat = 0; repeat < count; repeat++) {
             minoKinds.push(minoId);
             const mino: {x: Arith<any>, y: Arith<any>}[] = [];
@@ -264,6 +167,21 @@ export async function startPacking_v1(
             }
             solver.add(context.Or(...or));
             blocks.push({ mino });
+
+            // 対象性の排除
+            if (prevMinon != null) {
+                solver.add(
+                    context.Or(
+                        mino[0].x.gt(prevMinon[0].x),
+                        context.And(
+                            mino[0].x.eq(prevMinon[0].x),
+                            mino[0].y.gt(prevMinon[0].y)
+                        )
+                    )
+                );
+            }
+            // 前のミノの位置を保持
+            prevMinon = mino;
         }
     }
     if (tCount >= 2)
@@ -309,24 +227,30 @@ export async function startPacking_v1(
         let solution: number[][] = [];
         if (sat === 'sat') {
             const model = solver.model();
+            const bans = [];
             for (let r = 0; r < rows; r++) {
                 solution[r] = [];
                 for (let c = 0; c < cols; c++) {
                     solution[r][c] = -1;
                 }
             }
-            for (const [minoIndex, mino] of blocks.entries()) {
-                for (const block of mino.mino) {
+            for (const [minoIndex, mino] of blocks.entries()) 
+            {
+                // 最初の2ブロックを見れば、残りが一致するかがわかる
+                let maxBan = Math.min(2, rotationData2[minoKinds[minoIndex]].forms.length);
+                for (const [i, block] of mino.mino.entries()) {
                     let x = parseInt(model.eval(block.x).toString(), 10);
                     let y = parseInt(model.eval(block.y).toString(), 10);
                     solution[y][x] = minoIndex;
+                    if (i < maxBan)
+                    {
+                        // 冒頭のブロックを基準に禁止条件を追加
+                        bans.push(block.x.eq(x).and(block.y.eq(y)).not());
+                    }
                 }
             }
             onSolved(minoKinds, solution);
-
-            // FIXME: この解を除外する制約を追加して、再度解を探す
-            onFinished();
-            return; 
+            solver.add(context.Or(...bans)); // 次の解を探すため、禁止条件を追加
         }
         else
         {

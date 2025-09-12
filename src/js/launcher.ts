@@ -67,6 +67,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
             requiredMap.set(mino, (requiredMap.get(mino) || 0) + 1);
         }
         notRequiredList.length = 0;
+        console.log(count, emptySize);
         if (count === emptySize) { break; }
         
         // 余剰ミノの消費
