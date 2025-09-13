@@ -284,12 +284,41 @@ export async function startPacking_v1(
                     }
                 }
             }
-            onSolved(minoKinds, solution);
-            if (field.symmetryLevel >= 1)
+            let symmetry180 = true;
+            let symmetry90 = true;
+            if (field.symmetryLevel != 0)
             {
-                onSolved(minoKinds, solution.map(row => [...row].reverse()).reverse());  
+                function getAt(r:number, c:number): string
+                {
+                    if (r < 0 || r >= rows || c < 0 || c >= cols) return '';
+                    const minoIndex = solution[r][c];
+                    if (minoIndex < 0) return '';
+                    return minoKinds[minoIndex];
+                }
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (getAt(r, c) != getAt(rows - r - 1, cols - c - 1))
+                        {
+                            symmetry180 = false;
+                            symmetry90 = false;
+                        }
+                        if (getAt(r, c) != getAt(rows - c - 1, r))
+                        {
+                            symmetry90  = false;
+                        }
+                        if (getAt(r, c) != getAt(c, cols - r - 1))
+                        {
+                            symmetry90  = false;
+                        }
+                    }
+                }
             }
-            if (field.symmetryLevel >= 2)
+            onSolved(minoKinds, solution);
+            if (field.symmetryLevel == 1 && !symmetry180)
+            {
+                onSolved(minoKinds, solution.map(row => [...row].reverse()).reverse());
+            }
+            else if (field.symmetryLevel == 2 && !symmetry90)
             {
                 let newSolution:number[][] = [];    
                 for (let r = 0; r < rows; r++) {
@@ -298,8 +327,16 @@ export async function startPacking_v1(
                         newSolution[r][c] = solution[c][r];
                     }
                 }
-                onSolved(minoKinds, newSolution.map(row => [...row]).reverse());  
-                onSolved(minoKinds, newSolution.map(row => [...row].reverse()));
+                if (symmetry180)
+                {
+                    onSolved(minoKinds, newSolution.map(row => [...row]).reverse());  
+                }
+                else
+                {
+                    onSolved(minoKinds, solution.map(row => [...row].reverse()).reverse());
+                    onSolved(minoKinds, newSolution.map(row => [...row]).reverse());  
+                    onSolved(minoKinds, newSolution.map(row => [...row].reverse()));
+                }
             }
             solver.add(context.Or(...bans)); // 次の解を探すため、禁止条件を追加
         }

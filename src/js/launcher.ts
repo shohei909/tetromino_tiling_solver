@@ -350,11 +350,11 @@ function extractSubField<T>(
                 symmetry180 = false;
                 symmetry90  = false;
             }
-            if (getAt(x, y) != getAt(y, x))
+            if (getAt(x, y) != getAt(rows - y - 1, x))
             {
                 symmetry90  = false;
             }
-            if (getAt(y, x) != getAt(cols - x - 1, rows - y - 1))
+            if (getAt(x, y) != getAt(y, cols - x - 1))
             {
                 symmetry90  = false;
             }
