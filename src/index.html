@@ -9,7 +9,7 @@
   <title>逆引きテトリス</title>
 </head>
 <body class="bg-light">
-  <div style="minus-width:500px;margin:40px 10px 0 10px; margin:10px;padding:24px;" class="bg-white rounded shadow-sm">
+  <div style="min-width:500px;margin:40px 10px 0 10px; margin:10px;padding:24px;" class="bg-white rounded shadow-sm">
     <h1 class="text-center mb-4">逆引きテトリス</h1>
     <div class="text-center form-text mb-4">あたえられた地形に7種類のミノを敷き詰めます</div>
     <div id="alert" class="text-center alert alert-danger" role="alert" hidden></div>
@@ -23,13 +23,13 @@
               <label for="rows" class="col-form-label">縦:</label>
             </div>
             <div class="col-auto">
-              <input type="number" id="rows" value="4" min="1" class="form-control" style="width:80px;">
+              <input type="number" id="rows" value="4" min="1" max="30" class="form-control" style="width:80px;">
             </div>
             <div class="col-auto">
               <label for="cols" class="col-form-label">横:</label>
             </div>
             <div class="col-auto">
-              <input type="number" id="cols" value="6" min="1" class="form-control" style="width:80px;">
+              <input type="number" id="cols" value="6" min="1" max="30" class="form-control" style="width:80px;">
             </div>
           </div>
           <div id="grid" class="mb-4"></div>
@@ -46,19 +46,19 @@
             </div>
             <div id="mino-maxs" class="row g-2">
               <div class="col-auto text-center"><img src="img/I.png" alt="I" class="mb-1"><br><input type="number"
-                  id="plus-I" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-I" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/O.png" alt="O" class="mb-1"><br><input type="number"
-                  id="plus-O" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-O" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/T.png" alt="T" class="mb-1"><br><input type="number"
-                  id="plus-T" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-T" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/S.png" alt="S" class="mb-1"><br><input type="number"
-                  id="plus-S" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-S" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/Z.png" alt="Z" class="mb-1"><br><input type="number"
-                  id="plus-Z" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-Z" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/J.png" alt="J" class="mb-1"><br><input type="number"
-                  id="plus-J" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-J" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/L.png" alt="L" class="mb-1"><br><input type="number"
-                  id="plus-L" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="plus-L" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
             </div>
             <h3 class="h6 mb-2 text-secondary" style="margin:50px 0px;">- 使用を減らすミノ（次巡に残すなど）</h3>
             <div class="mb-2 d-flex gap-2">
@@ -66,19 +66,19 @@
             </div>
             <div id="mino-mins" class="row g-2">
               <div class="col-auto text-center"><img src="img/I.png" alt="I" class="mb-1"><br><input type="number"
-                  id="minus-I" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-I" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/O.png" alt="O" class="mb-1"><br><input type="number"
-                  id="minus-O" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-O" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/T.png" alt="T" class="mb-1"><br><input type="number"
-                  id="minus-T" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-T" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/S.png" alt="S" class="mb-1"><br><input type="number"
-                  id="minus-S" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-S" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/Z.png" alt="Z" class="mb-1"><br><input type="number"
-                  id="minus-Z" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-Z" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/J.png" alt="J" class="mb-1"><br><input type="number"
-                  id="minus-J" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-J" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
               <div class="col-auto text-center"><img src="img/L.png" alt="L" class="mb-1"><br><input type="number"
-                  id="minus-L" value="0" min="0" class="form-control text-center" style="width:60px;"></div>
+                  id="minus-L" value="0" min="0" max="99" class="form-control text-center" style="width:60px;"></div>
             </div>
           </div>
         </div>

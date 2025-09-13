@@ -66,48 +66,75 @@ function convertRotationData(rotationData: number[][][]): RotationData {
 }
 export async function startPacking_v1(
     z3:Z3HighLevel, 
-    field:SubfieldData, 
-    minos:Map<MinoKind, number>, 
+    problem:SubProblem, 
     onSolved:(minoKinds:MinoKind[], solution:number[][])=>void,
     onFinished:()=>void
 )
 {
+    const minos = problem.minos;
+    const field = problem.field;
     const grid = field.grid;
     const rows = grid.length;
     const cols = grid[0]?.length || 0;
     let minoCount = 0;
     minos.forEach(v => minoCount += v);
 
-    // 地形のパリティを取得
-    var checkerboardParity = field.checkerboardParity ? 1 : 0;
-    var verticalParity = field.verticalParity ? 1 : 0;
 
     // ミノのパリティを算出
     var tCount = 0;
+    var ljCount = 0;
+    var iCount = 0;
     for (const [minoId, count] of minos.entries()) {
         if (minoId == 'T')
         {
             tCount += count;
-            checkerboardParity += count;
         }
         else if (minoId == 'J' || minoId == 'L')
         {
-            verticalParity += count;
+            ljCount += count;
+        }
+        else if (minoId == 'I')
+        {
+            iCount += count;
         }
     }
-    // 市松模様のパリティが合わない場合、解なし
-    if (checkerboardParity % 2 !== 0) {
-        console.log("市松模様のパリティにより除外されました");
+    // 市松模様のパリティの偏りに、Tミノ数が足りてない場合、解なし
+    if (problem.field.checkerboardParity > tCount) {
+        console.log("市松パリティの偏りよりTミノが少ないため、除外されました");
         onFinished();
         return; // 解なし
     }
-    // Tミノの数が0で、縦方向のパリティが合わない場合、解なし
-    verticalParity %= 2;
-    if (tCount == 0 && verticalParity !== 0) {
-        console.log("Tミノの数が0で、縦方向のパリティが合わないため除外されました");
+    // 縦のパリティの偏りに、Tミノ数が足りてない場合、解なし
+    if (problem.field.verticalParity > tCount + ljCount + iCount * 2) {
+        console.log("縦パリティの偏りよりIJLTミノが少ないため、除外されました");
         onFinished();
         return; // 解なし
     }
+    // 横のパリティの偏りに、Tミノ数が足りてない場合、解なし
+    if (problem.field.horizontalParity > tCount + ljCount + iCount * 2) {
+        console.log("横パリティの偏りよりIJLTミノが少ないため、除外されました");
+        onFinished();
+        return; // 解なし
+    }
+    // Tミノの数が、市松パリティと合わない場合は解なし
+    if (tCount % 2 != problem.field.checkerboardParity % 2) {
+        console.log("Tミノの数が0で、市松パリティの偶奇がLJミノと合わないため除外されました");
+        onFinished();
+        return; // 解なし
+    }
+    // Tミノの数が0で、縦パリティが合わない場合、解なし
+    if (tCount == 0 && problem.field.verticalParity % 2 != ljCount % 2) {
+        console.log("Tミノの数が0で、縦パリティの偶奇がLJミノと合わないため除外されました");
+        onFinished();
+        return; // 解なし
+    }
+    // Tミノの数が0で、横パリティが合わない場合、解なし
+    if (tCount == 0 && problem.field.horizontalParity % 2 != ljCount % 2) {
+        console.log("Tミノの数が0で、横パリティの偶奇がLJミノと合わないため除外されました");
+        onFinished();
+        return; // 解なし
+    }
+    let verticalParity = (problem.field.horizontalParity + ljCount) % 2;
 
     // Z3 Context, Solverの生成
     const contextName = String(Math.floor(Math.random() * 1e9));
@@ -140,6 +167,7 @@ export async function startPacking_v1(
             }
             let or = [];
             for (const [formIndex, form] of rotationData2[minoId].forms.entries()) {
+                // Tミノが1個だけで、縦パリティによって縦か横かが決まる場合、もう一方の向きは除外
                 if (tCount == 1 && minoId == 'T' && form.verticalParity != (verticalParity === 1)) { continue; }
                 console.log(index, field.symmetryLevel, formIndex);
                 if (index === 3) {
