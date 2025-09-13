@@ -8,6 +8,7 @@ interface Problem {
     wholeSize: {rows:number, cols:number}; // 問題全体のサイズ
     minos: Map<MinoKind, {required:number, additional:number}>;
     subFields: SubFieldNode[];
+    fieldMinoLength: number; // フィールドを埋めるのに必要なミノの数
 }
 type SubFieldNode = SubField | SubFieldOr;
 interface SubField 

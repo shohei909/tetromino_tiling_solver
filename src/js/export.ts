@@ -15,7 +15,8 @@ export function addSolution(
     problem: SubProblemNode, 
     minoKinds: MinoKind[], 
     solution: number[][]
-) {
+):string
+{
     let resultDiv = document.getElementById('solve-result')!;
     let grid = problem.problem.field.grid;
     let prevStateKey = problem.stateKey;
@@ -60,7 +61,7 @@ export function addSolution(
     div.className = "result-canvas col-auto";
     resultDiv.appendChild(div);
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) return stateKey;
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
             ctx.fillStyle = '#e0e0ff';
@@ -73,6 +74,7 @@ export function addSolution(
             ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2);
         }
     }
+    return stateKey;
 }
 
 function getMinoColor(minoId: string): string {

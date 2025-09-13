@@ -13,7 +13,7 @@ let z3:Z3HighLevel & Z3LowLevel;
 // 問題の事前処理や分割をおこなって、複数のソルバーに投げる
 export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKind, plus: number, minus: number}[]) {
     if (z3 == null) { z3 = await init(); }
-    z3.em.PThread.terminateAllThreads();; // PThreadにアクセス可能か確認
+    z3.em.PThread.terminateAllThreads(); // PThreadにアクセス可能か確認
     
     // 処理の中断用マーカー
     let currentMarker = {}
@@ -55,7 +55,8 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
     // 中断ボタンを表示
     let abortButton = document.getElementById('abort-button')!;
     abortButton.hidden = false;
-    let subProblems:SubProblemNode[] = [];
+    const subProblems:SubProblemNode[] = [];
+    const solving:Set<string> = new Set(); // 同じ問題を複数回解くのを防止
     let threads = 0;
 
     await selectField("", minos, fields, fieldMinoLength);
@@ -65,18 +66,25 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
         stateKey: string, 
         minos: Map<MinoKind, { required: number, additional: number }>, 
         fields: SubFieldNode[],
-        restMinoLength: number
+        fieldMinoLength: number
     )
     {
-        let first = fields.shift()!;
+        if (solving.has(stateKey)) { 
+            console.log("同じ部分問題が検出されたので、スキップ");
+            return; 
+        } // 同じ問題を複数回解くのを防止
+        solving.add(stateKey);
+
+        let first = fields[0];
+        let rest = fields.slice(1);
         if (first.type == 'field')
         {
-            await selectMinos(stateKey, minos, first, fields, restMinoLength);
+            await selectMinos(stateKey, minos, first, rest, fieldMinoLength);
         }
         else
         {
             for (const subFields of first.fields) {
-                await selectField(stateKey, minos, subFields.concat(fields), restMinoLength);
+                await selectField(stateKey, minos, subFields.concat(rest), fieldMinoLength);
             }
         }
     }
@@ -119,7 +127,8 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
                     rest: {
                         minos: restMinos,
                         subFields: fields,
-                        wholeSize
+                        wholeSize,
+                        fieldMinoLength:wholeRestMino,
                     }
                 }
                 addSubProblem(subProblemNode);
@@ -182,11 +191,21 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
             (minoKinds, solution) => {
                 if (usingMarker != currentMarker) { return; }
                 console.log("解が見つかりました", solution);
-                addSolution(
+                let stateKey = addSolution(
                     subProblemNode, 
                     minoKinds, 
                     solution
                 );
+                // 次の部分問題が存在する
+                if (subProblemNode.rest.subFields.length > 0)
+                {
+                    selectField(
+                        stateKey, 
+                        subProblemNode.rest.minos, 
+                        subProblemNode.rest.subFields, 
+                        subProblemNode.rest.fieldMinoLength
+                    );
+                }
             },
             () => {
                 if (usingMarker != currentMarker) { return; }
@@ -369,7 +388,6 @@ function countMino(
         for (const [mino, count] of notRequiredMap) {
             requiredMap.set(mino, (requiredMap.get(mino) || 0) + count);
         }
-        console.log(count, fieldMinoLength);
         if (count === fieldMinoLength) { break; }
         
         // 余剰ミノの消費

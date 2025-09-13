@@ -145,6 +145,7 @@ export async function startPacking_v1(
     const blocks: {mino:{x: Arith<any>, y: Arith<any>}[]}[] = [];
     const minoKinds: MinoKind[] = [];
     const verticalParities = [];
+
     let index = -1;
     console.log("対称性レベル", field.symmetryLevel);
     // 対称性の低い順に処理
@@ -169,7 +170,6 @@ export async function startPacking_v1(
             for (const [formIndex, form] of rotationData2[minoId].forms.entries()) {
                 // Tミノが1個だけで、縦パリティによって縦か横かが決まる場合、もう一方の向きは除外
                 if (tCount == 1 && minoId == 'T' && form.verticalParity != (verticalParity === 1)) { continue; }
-                console.log(index, field.symmetryLevel, formIndex);
                 if (index === 3) {
                     if (field.symmetryLevel == 1 && formIndex >= 2) // 180度対称
                     {
