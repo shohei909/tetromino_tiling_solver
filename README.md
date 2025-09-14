@@ -43,10 +43,6 @@ solution-finder のような地形与えるとその組み方とセットアッ�
 
 各ミノの使用回数の上限下限リストと、領域分のミノ数が与えらえるので、使用するミノとしてのありうる組み合わせを全列挙する。これは、DFSで出来る。
 
-## パリティによりあり得ないミノの組み合わせを除外する
-
-市松パリティがTミノの使用回数と一致しないものを除外
-Tミノの使用回数0回で、縦パリティがJLの使用回数と一致しないものを除外
 
 ## 領域の対称性の利用
 
@@ -91,7 +87,8 @@ SATソルバー、例えば [splr]() を使って解く
   * 無効な配置方法が枝刈りできるのが強そう
 
 対称性を除去する制約は簡単には張れない
-splr を自前で wasm 出力して使えるようにする必要があるのが面倒そう
+splr を自前で wasm 出力して使えるようにする必要があるのが面倒そうなので、未実装
+
 
 ### 領域へのミノの敷き詰め案3（DLX）
 
@@ -100,6 +97,7 @@ Algorithm X + Dancing Links（DLX）を使って解く。
 * 前提として、事前の使用ミノの振り分けは不要になる
   * でも、パリティによる枝刈りや並列化ができるから事前に振り分けた方が高速そう
 * 種類が同じ複数ミノは行はまとめる。行は残りミノ数を使いきったら削除する。
+  * ただし、使用した行より若い行は削除してしまっても良い（解の重複除去のため）
 * 各ミノの種類において、必須分と使っても使わなくても良い分は別種類と見なす
   * 必須分を優先的に使うような工夫が要る
 * 各種類ごとに種類を表すダミー列を用意する
@@ -127,3 +125,79 @@ Algorithm X + Dancing Links（DLX）を使って解く。
 
 ## 解答の連結時の動的計画法
 分割した問題を解決していく過程で、そこまでで使用したミノとフィールドの形状が一致する場合がある。この際、その後の問題を重複して解かないように、ミノ・フィールドからキーを作って、途中までの解答を辞書に格納していく
+
+## パリティについて
+パリティを使うことで、領域へのミノの敷き詰めを開始する前に、特定のミノの組み合わせでは絶対に領域の敷き詰めができないことを判定できる
+
+### 市松パリティ
+ある地形を敷き詰める場合、Tミノ数は市松模様の塗り分けに対して、2種類の制約を両方満たす必要がある
+
+ここでは、ある地形を白黒の市松模様で塗り分けたときの 「(黒マス数-白マス数)の絶対値 / 2」 を 「市松パリティの偏り」 と呼ぶことにする
+
+* ① 市松パリティの偏りの偶奇と、Tミノの個数の偶奇が一致する。
+例：https://fumen.zui.jp/?D115@AhQpwhQpwhFewhQpwhQpFeQpwhQpwhFewhQpwhQpMe?AgWzBlPp9BQrDfE2Ss9Blvs2AEqDfETorwBlvs2AjxDfETo?SBBlvs2A2HEfEVY9AClvs2A4BEfETY12BwXHDBQxLSA1Q8A?BwX3JBmBhRA1d8UByX3JB3UFSA1dkRBxXHDBQEFSA1g+AB0?X3JBUY2AA6filwhFeglRpwhFeg0RpwhFei0whjegWAegWGe?AtQpwwQpFeglAtglwwFeAtglAtglMeAAP3AUYHDBQWOSA1d?s2BFYHDBQxLSA1gk2ACYPNB1icRA1d0KBGY3JBwCqRAVyXO?BwX3JBQ4MBA
+
+* ② 市松パリティの偏り <= Tミノの個数
+例：https://fumen.zui.jp/?D115@AhQpwhQpwhQpDeQpwhQpwhQpFeQpwhQpwhQpDeQpwh?QpwhQpMeAgWzBlPp9BQrDfE2Ss9Blvs2AEqDfETorwBlvs2?AjxDfEToSBBlvs2A2HEfEVY9AClvs2A4BEfETY12ByXHDBQ?xLSA1Q8ABwX3JBmBhRA1d8UByX3JB3UFSA1dkRBxXHDBQEF?SA1g+AB0X3JBUY2AAAhglAegWAegWDeglAtglwwglFeAtg0?QpAtglDeAtg0QpwwglMeAAP4AUYHDBQWOSA1ds2BFYHDBQx?LSA1gk2ACYPNB1icRA1d0KBmrDfEVYUzBl/m9BFwDfE038v?B
+
+
+### 縦パリティ
+ある地形を敷き詰める場合、LJ・T縦・I縦の数は縦縞の2地形に対して、2種類の制約を両方満たす必要がある
+
+ここでは、ある地形を白黒の縦縞で塗り分けたときの 「(黒マス数-白マス数)の絶対値 / 2」 を 「縦パリティの偏り」 と呼ぶことにする
+
+* ① 縦パリティの偏りの偶奇と、Lミノ+Jミノ+T縦の偶奇が一致する。
+* ② 縦パリティの偏り <= Lミノ+Jミノ+T縦+2×I縦
+
+
+### 横パリティ
+ある地形を敷き詰める場合、LJ・T横・I横の数は横パリティに対して、2種類の制約を両方満たす必要がある
+
+ここでは、ある地形を白黒の横縞で塗り分けたときの 「(黒マス数-白マス数)の絶対値 / 2」 を 「横パリティの偏り」 と呼ぶことにする
+
+* ① 横パリティの偏りの偶奇と、Lミノ+Jミノ+T横の偶奇が一致する。
+ただし、これは市松パリティの①と縦パリティの①を満たしていたら自動で満たされる
+* ② 横パリティの偏り <= Lミノ+Jミノ+T横+2×I横
+こっちの制約は、市松パリティと縦パリティの制約ではカバーできない
+
+### 発展
+ここでは、①を偶奇制約、② を閾値制約と呼ぶことにする。
+閾値制約については縦横市松以外の塗分けでも使用できる
+
+#### 横長市松パリティ
+塗り方：https://fumen.zui.jp/?D115@+gxhRpxhRpBeRpxhRpxhBexhRpxhRpBeRpxhRpxhKe?AgH
+
+* このパリティの偏り <= T+L+J+S横+Z横
+  * I・O・S縦・Z縦は0変動
+  * S横+Z横は必ず1変動する
+  * T、L、Jは置く位置によって、1変動か0変動かが変わるので、偶奇制約について考えるのは面倒
+
+同様に縦長市松パリティもある
+
+
+#### 斜め縞パリティ
+塗り方: https://fumen.zui.jp/?D115@rgRpxhRpDeQpxhRpwhDexhRpxhDewhRpxhQpDeRpxh?RpDeQpxhRpwhLeAgH
+
+* ①偶奇制約: TJLが無い場合、このパリティ偏りの偶奇はO数の偶奇は一致する
+* ②閾値制約: パリティの偏り <= O+T+L+J+2×S+2×Z
+  * Iは0変動
+  * Oは1変動
+  * TJLは0か1変動
+  * ZSは0か2変動
+
+
+#### Oパリティ
+例えば: https://fumen.zui.jp/?D115@/gxhRpxhDexhRpxhDeRpxhRpDeRpxhRpLeAgH
+
+このパリティの偏り <= T+L+J+S+Z+2×O
+* Iは0変動
+
+使える例: https://fumen.zui.jp/?v115@/v115@tgxhHexhFexhRpxhDexhRpxhFexhHexhNeAgH
+
+この地形は偏り6で5ミノなので、Oが1つ以上必要
+
+#### 疑問メモ
+4色・16色パリティに閾値制約ってあるの？
+
+### 分断された2地形の合算
+地形が二つに分断されてる場合、地形①の偏り+地形②の偏りの2つで合算してから、閾値制約を判定すれば良い。横長市松パリティのように偏りの取り方が複数ある場合は、それぞれでもっとも偏りの大きくなる取り方を合算して良い
