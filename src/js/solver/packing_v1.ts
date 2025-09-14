@@ -66,8 +66,8 @@ function convertRotationData(rotationData: number[][][]): RotationData {
 }
 export async function startPacking_v1(
     z3:Z3HighLevel, 
-    problem:SubProblem, 
-    onSolved:(minoKinds:MinoKind[], solution:number[][])=>void,
+    problem:PackingProblem, 
+    onSolved:(solution:PackingSolution)=>void,
     onFinished:()=>void
 )
 {
@@ -313,10 +313,13 @@ export async function startPacking_v1(
                     }
                 }
             }
-            onSolved(minoKinds, solution);
+            onSolved({minoKinds, solution});
             if (field.symmetryLevel == 1 && !symmetry180)
             {
-                onSolved(minoKinds, solution.map(row => [...row].reverse()).reverse());
+                onSolved({
+                    minoKinds, 
+                    solution: solution.map(row => [...row].reverse()).reverse()
+                });
             }
             else if (field.symmetryLevel == 2 && !symmetry90)
             {
@@ -329,13 +332,13 @@ export async function startPacking_v1(
                 }
                 if (symmetry180)
                 {
-                    onSolved(minoKinds, newSolution.map(row => [...row]).reverse());  
+                    onSolved({minoKinds, solution: newSolution.map(row => [...row]).reverse()});
                 }
                 else
                 {
-                    onSolved(minoKinds, solution.map(row => [...row].reverse()).reverse());
-                    onSolved(minoKinds, newSolution.map(row => [...row]).reverse());  
-                    onSolved(minoKinds, newSolution.map(row => [...row].reverse()));
+                    onSolved({minoKinds, solution: solution.map(row => [...row].reverse()).reverse()});
+                    onSolved({minoKinds, solution: newSolution.map(row => [...row]).reverse()});
+                    onSolved({minoKinds, solution: newSolution.map(row => [...row]).reverse()});
                 }
             }
             solver.add(context.Or(...bans)); // 次の解を探すため、禁止条件を追加

@@ -12,9 +12,8 @@ export function clearSolutions() {
 
 // 結果Canvasの生成・描画処理
 export function addSolution(
-    problem: SubProblemNode, 
-    minoKinds: MinoKind[], 
-    solution: number[][]
+    problem: SubProblemContext, 
+    solution: PackingSolution
 ):string
 {
     let resultDiv = document.getElementById('solve-result')!;
@@ -22,7 +21,7 @@ export function addSolution(
     let prevStateKey = problem.stateKey;
     let prevState = solutions.get(prevStateKey);
     let stateIdentifier = resolveStateIdentifier(prevState?.stateIdentifier, problem);
-    let stateKey = stringifyIdentifier(stateIdentifier);
+    let stateKey = stringifyStateIdentifier(stateIdentifier);
     if (!solutions.has(stateKey))
     {
         solutions.set(stateKey, {
@@ -39,7 +38,6 @@ export function addSolution(
     }
     stateSolution.solutions.get(prevStateKey)!.push({
         minos: problem.problem.minos,
-        minoKinds,
         solution,
         problem: problem.problem
     });
@@ -69,8 +67,8 @@ export function addSolution(
             ctx.strokeStyle = '#b7b7b7ff';
             ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
             
-            const minoIndex = solution[r][c];
-            ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : minoKinds[minoIndex]);
+            const minoIndex = solution.solution[r][c];
+            ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : solution.minoKinds[minoIndex]);
             ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2);
         }
     }
@@ -91,7 +89,7 @@ function getMinoColor(minoId: string): string {
 }
 
 // キー文字列生成用の状態を作成
-function resolveStateIdentifier(prevState:StateIdentifier | undefined, problem: SubProblemNode):StateIdentifier
+function resolveStateIdentifier(prevState:StateIdentifier | undefined, problem: SubProblemContext):StateIdentifier
 {   
     let consumedMinos = new Map<MinoKind, number>(problem.problem.minos);
     let filledField;
@@ -122,23 +120,29 @@ function resolveStateIdentifier(prevState:StateIdentifier | undefined, problem: 
     };
 }
 
-function stringifyIdentifier(id:StateIdentifier):string
+function stringifyStateIdentifier(id:StateIdentifier):string
 {
-    let length = 7 + Math.ceil((id.filledField.length * id.filledField[0].length) / 8);
+    return stringifyIdentifier(id.consumedMinos, id.filledField);
+}
+
+export function stringifyIdentifier(minos:Map<MinoKind, number>, grid:boolean[][]):string
+{
+    let length = 8 + Math.ceil((grid.length * grid[0].length) / 8);
     let buffer = new ArrayBuffer(length);
     let dataView = new DataView(buffer);
     let offset = 0;
     for (const mino of minoKinds)
     {
-        dataView.setUint8(offset++, (id.consumedMinos.get(mino) || 0));
+        dataView.setUint8(offset++, (minos.get(mino) || 0));
     }
+    dataView.setUint8(offset++, grid[0].length);
     let byte = 0;
     let bitIndex = 0;
-    for (let r = 0; r < id.filledField.length; r++)
+    for (let r = 0; r < grid.length; r++)
     {
-        for (let c = 0; c < id.filledField[r].length; c++)
+        for (let c = 0; c < grid[r].length; c++)
         {
-            byte = (byte << 1) | (id.filledField[r][c] ? 1 : 0);
+            byte = (byte << 1) | (grid[r][c] ? 1 : 0);
             bitIndex += 1;
             if (bitIndex > 8)
             {

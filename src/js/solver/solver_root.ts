@@ -1,6 +1,6 @@
 import { init, type Arith, type Bool, type Z3HighLevel, type Z3LowLevel } from 'z3-solver';
-import { clearSolutions, addSolution } from '../export';
-import { startPacking_v1 } from '../packing_v1';
+import { clearSolutions, addSolution, stringifyIdentifier } from '../solution';
+import { startPacking_v1 } from './packing_v1';
 import { offset } from '@popperjs/core';
 import { minoKinds } from '../constants';
 
@@ -55,8 +55,9 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
     // 中断ボタンを表示
     let abortButton = document.getElementById('abort-button')!;
     abortButton.hidden = false;
-    const subProblems:SubProblemNode[] = [];
+    const subProblems:SubProblemContext[] = [];
     const solving:Set<string> = new Set(); // 同じ問題を複数回解くのを防止
+    const packingProblems = new Map<string, PackingEntry>(); // パッキング問題の記録
     let threads = 0;
 
     await selectField("", minos, fields, fieldMinoLength);
@@ -118,7 +119,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
                 let restMinos = subtractMinos(minos, result);
 
                 // 全てのミノの数が決定した
-                let subProblemNode:SubProblemNode = {
+                let subProblemNode:SubProblemContext = {
                     stateKey,
                     problem: {
                         minos: new Map(result),
@@ -168,7 +169,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
             subRestMino = prevSubRestMino;
         }
     }
-    function addSubProblem(subProblemNode:SubProblemNode)
+    function addSubProblem(subProblemNode:SubProblemContext)
     {
         if (usingMarker != currentMarker) { return; }
         if (threads >= 8) 
@@ -180,31 +181,57 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
             launchProblem(subProblemNode);
         }
     }
-    function launchProblem(subProblemNode:SubProblemNode, depth = 0)
+    function launchProblem(context:SubProblemContext, depth = 0)
     {
         if (usingMarker != currentMarker) { return; }
+        let stateId = stringifyProblemIdentifier(context.problem);
+        function solved(context:SubProblemContext, solution:PackingSolution):void
+        {
+            let stateKey = addSolution(
+                context,
+                solution
+            );
+            // 次の部分問題が存在する
+            if (context.rest.subFields.length > 0)
+            {
+                selectField(
+                    stateKey, 
+                    context.rest.minos, 
+                    context.rest.subFields, 
+                    context.rest.fieldMinoLength
+                );
+            }
+        }
+        if (packingProblems.has(stateId))
+        {
+            // 既に同じ問題が解かれている場合は、解答済み分は使いまわす
+            let problem = packingProblems.get(stateId)!;
+            problem.contexts.push(context);
+            for (const solution of problem.solutions) {
+                solved(context, solution);
+            }
+            return;
+        }
+
+        // 新しいパッキング問題
+        packingProblems.set(stateId, {
+            contexts: [context],
+            solutions: []
+        });
+
         threads += 1;
-        console.log("部分問題を開始", subProblemNode.problem);
+        console.log("部分問題を開始", context.problem);
         startPacking_v1(
             z3,
-            subProblemNode.problem,
-            (minoKinds, solution) => {
+            context.problem,
+            (solution) => {
                 if (usingMarker != currentMarker) { return; }
                 console.log("解が見つかりました", solution);
-                let stateKey = addSolution(
-                    subProblemNode, 
-                    minoKinds, 
-                    solution
-                );
-                // 次の部分問題が存在する
-                if (subProblemNode.rest.subFields.length > 0)
+
+                // このパッキングの解が必要な部分問題すべてに解を伝える
+                for (const packingContext of packingProblems.get(stateId)!.contexts)
                 {
-                    selectField(
-                        stateKey, 
-                        subProblemNode.rest.minos, 
-                        subProblemNode.rest.subFields, 
-                        subProblemNode.rest.fieldMinoLength
-                    );
+                    solved(packingContext, solution);
                 }
             },
             () => {
@@ -440,4 +467,9 @@ function subtractMinos(minos: Map<MinoKind, {required:number, additional:number}
         result.set(minoId, { required: newRequired, additional: newAdditional });
     }
     return result;
+}
+
+function stringifyProblemIdentifier(problem: PackingProblem): string
+{
+    return stringifyIdentifier(problem.minos, problem.field.grid);
 }
