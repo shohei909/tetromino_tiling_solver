@@ -3,7 +3,7 @@ import { clearSolutions, addSolution } from '../solution';
 import { startPacking_v1 } from './packing_ver_z3';
 import { offset } from '@popperjs/core';
 import { minoKinds } from '../constants';
-import { getParity } from '../tool/parity';
+import { checkParity, getParity, parityMessage } from '../tool/parity';
 import { stringifyProblemIdentifier } from '../tool/identifier';
 
 (window as any).global = window;
@@ -155,9 +155,13 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
                 // ミノ数を合わせる
                 subRestMino      = prevSubRestMino - i;
                 wholeRestMino    = prevWholeRestMino - i;
-                restRequiredMino = prevRestRequiredMino - Math.max(i, required);
+                restRequiredMino = prevRestRequiredMino - Math.min(i, required);
 
-                if (restRequiredMino > wholeRestMino) { break; } // 残り必須ミノの数が配置可能なミノ数を超えた
+                // 残り必須ミノの数が配置可能なミノ数を超えたら終了
+                if (restRequiredMino > wholeRestMino) 
+                { 
+                    break; 
+                } 
 
                 result.set(minoKinds[minoIndex], i);
 
@@ -222,9 +226,55 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
         });
 
         threads += 1;
+        function onFinished()
+        {
+            if (usingMarker != currentMarker) { return; }
+            if (
+                depth < 10 && 
+                subProblems.length > 0
+            ) // スタックが深くなりすぎるのを防止
+            {
+                launchProblem(subProblems.pop()!, depth + 1);
+            }
+            threads -= 1;
+        }
+        // ミノのパリティを算出
+        let tCount = 0;
+        let ljCount = 0;
+        let szCount = 0;
+        let iCount = 0;
+        let oCount = 0;
+        for (const [minoId, count] of context.problem.minos.entries()) {
+            if (minoId == 'T') {
+                tCount += count;
+            } else if (minoId == 'J' || minoId == 'L') {
+                ljCount += count;
+            } else if (minoId == 'I') {
+                iCount += count;
+            } else if (minoId == 'O') {
+                oCount += count;
+            } else if (minoId == 'S' || minoId == 'Z') {
+                szCount += count;
+            }
+        }
+        let parityResult = checkParity(
+            iCount, 
+            oCount,
+            tCount,
+            ljCount, 
+            szCount, 
+            context.problem.field.parity
+        );
+        if (parityResult != 0) {
+            console.log(parityMessage[parityResult]);
+            onFinished();
+            return; // 解なし
+        }
         console.log("部分問題を開始", context.problem);
         startPacking_v1(
             z3,
+            tCount,
+            ljCount,
             context.problem,
             (solution) => {
                 if (usingMarker != currentMarker) { return; }
@@ -236,17 +286,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
                     solved(packingContext, solution);
                 }
             },
-            () => {
-                if (usingMarker != currentMarker) { return; }
-                if (
-                    depth < 10 && 
-                    subProblems.length > 0
-                ) // スタックが深くなりすぎるのを防止
-                {
-                    launchProblem(subProblems.pop()!, depth + 1);
-                }
-                threads -= 1;
-            }
+            onFinished
         );
     }
 

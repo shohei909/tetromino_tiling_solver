@@ -16,9 +16,21 @@ let isDrawing = false;
 let drawValue: boolean | null = null;
 
 function createGrid() {
-	const rows = parseInt((document.getElementById('rows') as HTMLInputElement).value);
-	const cols = parseInt((document.getElementById('cols') as HTMLInputElement).value);
-	grid = Array.from({ length: rows }, () => Array(cols).fill(true));
+	let initial = [
+		"1100000000",
+		"1110000100",
+		"1110111111",
+		"1111011111",
+	];
+	const rows = initial.length;
+	const cols = initial[0].length;
+	(document.getElementById('cols') as HTMLInputElement).value = cols.toString();
+	(document.getElementById('rows') as HTMLInputElement).value = rows.toString();
+	grid = Array.from({ length: rows }, (_, r) => {
+		return Array.from({ length: cols }, (_, c) => {
+			return initial[r][c] === '1';
+		});
+	});
 	updateGrid();
 	window.addEventListener('mouseup', () => {
 		isDrawing = false;

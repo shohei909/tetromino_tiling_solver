@@ -66,8 +66,10 @@ function convertRotationData(rotationData: number[][][]): RotationData {
     return { forms };
 }
 export async function startPacking_v1(
-    z3:Z3HighLevel, 
-    problem:PackingProblem, 
+    z3:Z3HighLevel,
+    tCount:number,
+    ljCount:number,
+    problem:PackingProblem,
     onSolved:(solution:PackingSolution)=>void,
     onFinished:()=>void
 )
@@ -80,47 +82,6 @@ export async function startPacking_v1(
     let minoCount = 0;
     minos.forEach(v => minoCount += v);
 
-    // ミノのパリティを算出
-    var tCount = 0;
-    var ljCount = 0;
-    var szCount = 0;
-    var iCount = 0;
-    var oCount = 0;
-    for (const [minoId, count] of minos.entries()) {
-        if (minoId == 'T')
-        {
-            tCount += count;
-        }
-        else if (minoId == 'J' || minoId == 'L')
-        {
-            ljCount += count;
-        }
-        else if (minoId == 'I')
-        {
-            iCount += count;
-        }
-        else if (minoId == 'O')
-        {
-            oCount += count;
-        }
-        else if (minoId == 'S' || minoId == 'Z')
-        {
-            szCount += count;
-        }
-    }
-    let parityResult = checkParity(
-        iCount, 
-        oCount,
-        tCount,
-        ljCount, 
-        szCount, 
-        field.parity
-    );
-    if (parityResult != 0) {
-        console.log(parityMessage[parityResult]);
-        onFinished();
-        return; // 解なし
-    }
     let verticalParity = (field.parity.verticalParity + ljCount) % 2;
 
     // Z3 Context, Solverの生成
