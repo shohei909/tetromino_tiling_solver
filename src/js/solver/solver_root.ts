@@ -1,8 +1,8 @@
 import { init, type Arith, type Bool, type Z3HighLevel, type Z3LowLevel } from 'z3-solver';
-import { clearSolutions, addSolution } from './export';
-import { startPacking_v1 } from './packing_v1';
+import { clearSolutions, addSolution } from '../export';
+import { startPacking_v1 } from '../packing_v1';
 import { offset } from '@popperjs/core';
-import { minoKinds } from './constants';
+import { minoKinds } from '../constants';
 
 (window as any).global = window;
 let usingMarker:null|{} = null;
