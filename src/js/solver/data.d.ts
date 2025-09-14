@@ -20,10 +20,21 @@ interface SubField
     offset            : { x: number, y: number };
     grid              : boolean[][];
     blockCount        : number;
-    checkerboardParity: number,
-    verticalParity    : number,
-    horizontalParity  : number,
+    parity            : Parity;
     symmetryLevel     : SymmetryLevel,
+}
+interface Parity
+{
+    checkerboardParity     : number,
+    verticalParity         : number,
+    horizontalParity       : number,
+    wideCheckerboardParity : number,
+    diagonalParity0        : number,
+    diagonalParity1        : number,
+    diagonalParity2        : number,
+    diagonalParity3        : number,
+    maxDiagonalParity      : number,
+    oParity                : number,
 }
 // 領域に対して分割の仕方が複数あった場合、それらのいずれか1つずつを試して解く
 interface SubFieldOr {

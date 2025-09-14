@@ -1,8 +1,10 @@
 import { init, type Arith, type Bool, type Z3HighLevel, type Z3LowLevel } from 'z3-solver';
-import { clearSolutions, addSolution, stringifyIdentifier } from '../solution';
-import { startPacking_v1 } from './packing_v1';
+import { clearSolutions, addSolution } from '../solution';
+import { startPacking_v1 } from './packing_ver_z3';
 import { offset } from '@popperjs/core';
 import { minoKinds } from '../constants';
+import { getParity } from '../tool/parity';
+import { stringifyProblemIdentifier } from '../tool/identifier';
 
 (window as any).global = window;
 let usingMarker:null|{} = null;
@@ -337,33 +339,10 @@ function extractSubField<T>(
     func: (value: T) => boolean
 ): SubField
 {
-    let rows = grid.length;
-    let cols = grid[0]?.length || 0;
-    let checkerboardParity = 0;
-    let verticalParity = 0;
-    let horizontalParity = 0;
-    let blockCount = 0;
-    let maxX = 0;
-    let maxY = 0;
-    let minX = cols - 1;
-    let minY = rows - 1;
-    for (let x = 0; x < cols; x++) {
-        for (let y = 0; y < rows; y++) {
-            if (func(grid[y][x])) {
-                blockCount++;
-                checkerboardParity += ((x + y) % 2) ? 1 : -1;
-                verticalParity     += (y % 2) ? 1 : -1;
-                horizontalParity   += (x % 2) ? 1 : -1;
-                if (x > maxX) maxX = x;
-                if (x < minX) minX = x;
-                if (y > maxY) maxY = y;
-                if (y < minY) minY = y;
-            }
-        }
-    }
-    let newGrid = grid.slice(minY, maxY + 1).map(r => r.slice(minX, maxX + 1).map(func));
-    rows = newGrid.length;
-    cols = newGrid[0]?.length || 0;
+    let info = getParity(grid, func);
+    let newGrid = grid.slice(info.boundingBox.minY, info.boundingBox.maxY + 1).map(r => r.slice(info.boundingBox.minX, info.boundingBox.maxX + 1).map(func));
+    let rows = newGrid.length;
+    let cols = newGrid[0]?.length || 0;
     let symmetry90 = true;
     let symmetry180 = true;
     function getAt(x:number, y:number): boolean {
@@ -389,12 +368,10 @@ function extractSubField<T>(
     }
     return {
         type: 'field',
-        offset: { x: offsetX + minX, y: offsetY + minY },
+        offset: { x: offsetX + info.boundingBox.minX, y: offsetY + info.boundingBox.minY },
         grid: newGrid,
-        blockCount,
-        checkerboardParity: Math.abs(checkerboardParity / 2),
-        verticalParity: Math.abs(verticalParity / 2),
-        horizontalParity: Math.abs(horizontalParity / 2),
+        blockCount: info.blockCount,
+        parity: info.parity,
         symmetryLevel: symmetry90 ? 2 : symmetry180 ? 1 : 0,
     }
 }
@@ -467,9 +444,4 @@ function subtractMinos(minos: Map<MinoKind, {required:number, additional:number}
         result.set(minoId, { required: newRequired, additional: newAdditional });
     }
     return result;
-}
-
-function stringifyProblemIdentifier(problem: PackingProblem): string
-{
-    return stringifyIdentifier(problem.minos, problem.field.grid);
 }
