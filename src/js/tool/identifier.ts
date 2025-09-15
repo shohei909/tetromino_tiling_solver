@@ -1,22 +1,37 @@
-import { minoKinds } from "../constants";
+import { offset } from "@popperjs/core";
+import { tetroMinoKinds } from "../constants";
 
-export function stringifyProblemIdentifier(problem: PackingProblem): string
+export function stringifyPackingProblem(problem: PackingProblem):PackingProblemKey
 {
-    return stringifyIdentifier(problem.minos, problem.field.grid);
+    return stringifyIdentifier(problem.minos, problem.field.grid) as PackingProblemKey;
 }
 
-export function stringifyStateIdentifier(id:StateIdentifier):string
+export function stringifyStateIdentifier(id:StateIdentifier):StateKey
 {
-    return stringifyIdentifier(id.consumedMinos, id.filledField);
+    return stringifyIdentifier(id.consumedMinos, id.filledField) as StateKey;
 }
 
-function stringifyIdentifier(minos:Map<MinoKind, number>, grid:boolean[][]):string
+export function stringifyMinoKinds(minos:MinoKind[]): string
+{
+    return minos.slice().sort().join('');
+}
+export function stringifyMinos(minos:Map<MinoKind, number>): string
+{
+    return stringifyIdentifier(minos, [[]]);
+}
+
+export function stringifyField(field: boolean[][]): string
+{
+    return stringifyIdentifier(new Map<MinoKind, number>(), field);
+}
+
+export function stringifyIdentifier(minos:Map<MinoKind, number>, grid:boolean[][]):string
 {
     let length = 8 + Math.ceil((grid.length * grid[0].length) / 8);
     let buffer = new ArrayBuffer(length);
     let dataView = new DataView(buffer);
     let offset = 0;
-    for (const mino of minoKinds)
+    for (const mino of tetroMinoKinds)
     {
         dataView.setUint8(offset++, (minos.get(mino) || 0));
     }
@@ -40,5 +55,26 @@ function stringifyIdentifier(minos:Map<MinoKind, number>, grid:boolean[][]):stri
     if (bitIndex > 0) {
         dataView.setUint8(offset++, byte);
     }
-    return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    return encode(buffer);
+}
+
+export function stringifyPackingSolution(solution: PackingSolution):PackingSolutionKey
+{
+    let length = solution.solution.length * solution.solution[0].length;
+    let buffer = new ArrayBuffer(length);
+    let dataView = new DataView(buffer);
+    let offset = 0;
+    for (let r = 0; r < solution.solution.length; r++)
+    {
+        for (let c = 0; c < solution.solution[r].length; c++)
+        {
+            let value = tetroMinoKinds.indexOf(solution.minoKinds[solution.solution[r][c]]);
+            dataView.setUint8(offset++, value);
+        }
+    }
+    return encode(buffer) as PackingSolutionKey;
+}
+
+function encode(buffer: ArrayBuffer): string {
+    return btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }

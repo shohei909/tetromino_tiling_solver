@@ -1,2 +1,2 @@
 
-export const minoKinds:MinoKind[] = ['J','L','T','S','Z','I','O'];
+export const tetroMinoKinds:MinoKind[] = ['J','L','T','S','Z','I','O'];

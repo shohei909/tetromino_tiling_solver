@@ -17,7 +17,7 @@ if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
 for (const mino of minos) {
   console.log(`Generating ${mino.name}.png ...`);
-  const canvas = createCanvas(16, 8);
+  const canvas = createCanvas(mino.shape[0].length * 4, mino.shape.length * 4);
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = mino.color;
   for (let y = 0; y < mino.shape.length; y++) {

@@ -43,7 +43,7 @@ interface SubFieldOr {
 }
 // 部分問題の途中経過情報
 interface SubProblemContext {
-    stateKey: string; // すでに解いた部分問題の状態を表すキー文字列
+    stateKey: StateKey; // すでに解いた部分問題の状態を表すキー文字列
     problem: PackingProblem; // 現在取り組む部分問題
     rest: Problem; // 現在の部分問題を解いた後に残る問題
 }
@@ -51,13 +51,6 @@ interface SubProblemContext {
 interface PackingProblem {
     minos: Map<MinoKind, number>;
     field: SubField;
-}
-// 部分問題の解の情報
-interface SubSolutionNode
-{
-    stateIdentifier:StateIdentifier;
-    solutions: Map<string, SubSolution[]>; // key: stateKey
-    linkedSolutions: Set<StateIdentifier>; // この部分問題を使用しているより大きな解
 }
 interface SubSolution {
     // ミノの配置情報
@@ -82,3 +75,11 @@ interface PackingSolution
     minoKinds:MinoKind[], 
     solution:number[][]
 }
+
+// newtypeのテンプレート
+type Key<string, Tag> = string & { [Unique]: Tag };
+
+type StateKey           = Key<string, 'StateKey'>;
+type PackingProblemKey  = Key<string, 'PackingProblemKey'>;
+type PackingSolutionKey = Key<string, 'PackingSolutionKey'>;
+type MainSolutionKey    = Key<string, 'MainSolutionKey'>;

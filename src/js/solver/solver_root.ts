@@ -1,10 +1,10 @@
 import { init, type Arith, type Bool, type Z3HighLevel, type Z3LowLevel } from 'z3-solver';
 import { clearSolutions, addSolution } from '../solution';
 import { startPacking_v1 } from './packing_ver_z3';
-import { offset } from '@popperjs/core';
-import { minoKinds } from '../constants';
+import { offset, type State } from '@popperjs/core';
+import { tetroMinoKinds } from '../constants';
 import { checkParity, getParity, parityMessage } from '../tool/parity';
-import { stringifyProblemIdentifier } from '../tool/identifier';
+import { stringifyPackingProblem } from '../tool/identifier';
 
 (window as any).global = window;
 let usingMarker:null|{} = null;
@@ -58,15 +58,15 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
     let abortButton = document.getElementById('abort-button')!;
     abortButton.hidden = false;
     const subProblems:SubProblemContext[] = [];
-    const solving:Set<string> = new Set(); // 同じ問題を複数回解くのを防止
-    const packingProblems = new Map<string, PackingEntry>(); // パッキング問題の記録
+    const solving:Set<StateKey> = new Set(); // 同じ問題を複数回解くのを防止
+    const packingProblems = new Map<PackingProblemKey, PackingEntry>(); // パッキング問題の記録
     let threads = 0;
 
-    await selectField("", minos, fields, fieldMinoLength);
+    await selectField("" as StateKey, minos, fields, fieldMinoLength);
     
     // 処理対象のフィールドを選択する
     async function selectField(
-        stateKey: string, 
+        stateKey: StateKey, 
         minos: Map<MinoKind, { required: number, additional: number }>, 
         fields: SubFieldNode[],
         fieldMinoLength: number
@@ -93,7 +93,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
     }
     // 処理対象のミノを選択をする
     async function selectMinos(
-        stateKey:string, 
+        stateKey:StateKey, 
         minos: Map<MinoKind, { required: number, additional: number }>, 
         field: SubField, 
         fields: SubFieldNode[],
@@ -116,7 +116,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
                 await new Promise<void>(resolve => {setTimeout(resolve, 1);});
                 if (usingMarker != currentMarker) { return; }
             }
-            if (minoIndex >= minoKinds.length)
+            if (minoIndex >= tetroMinoKinds.length)
             {
                 let restMinos = subtractMinos(minos, result);
 
@@ -141,14 +141,14 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
             let prevSubRestMino = subRestMino;
             let prevWholeRestMino = wholeRestMino;
             let prevRestRequiredMino = restRequiredMino;
-            let required = minos.get(minoKinds[minoIndex])!.required;
-            let additional = minos.get(minoKinds[minoIndex])!.additional;
+            let required = minos.get(tetroMinoKinds[minoIndex])!.required;
+            let additional = minos.get(tetroMinoKinds[minoIndex])!.additional;
 
             // ミノの数を決定する
             let max = required + additional;
             if (max > wholeRestMino) { max = subRestMino; }
             let i = 0;
-            if (minoIndex == minoKinds.length - 1) { i = subRestMino; } // 最後のミノは必ず残りを全て使う
+            if (minoIndex == tetroMinoKinds.length - 1) { i = subRestMino; } // 最後のミノは必ず残りを全て使う
 
             for (; i <= max; i++)
             {
@@ -163,7 +163,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
                     break; 
                 } 
 
-                result.set(minoKinds[minoIndex], i);
+                result.set(tetroMinoKinds[minoIndex], i);
 
                 await dfs(minoIndex + 1);
                 if (usingMarker != currentMarker) { return; }
@@ -190,10 +190,11 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
     function launchProblem(context:SubProblemContext, depth = 0)
     {
         if (usingMarker != currentMarker) { return; }
-        let stateId = stringifyProblemIdentifier(context.problem);
+        let stateId = stringifyPackingProblem(context.problem);
         function solved(context:SubProblemContext, solution:PackingSolution):void
         {
             let stateKey = addSolution(
+                wholeSize,
                 context,
                 solution
             );
@@ -460,7 +461,7 @@ function countMino(
         }
     }
     let result: Map<MinoKind, {required:number, additional:number}> = new Map();
-    for (const minoId of minoKinds) {
+    for (const minoId of tetroMinoKinds) {
         result.set(
             minoId, 
             { 
@@ -475,7 +476,7 @@ function countMino(
 function subtractMinos(minos: Map<MinoKind, {required:number, additional:number}>, used: Map<MinoKind, number>): Map<MinoKind, {required:number, additional:number}>
 {
     let result: Map<MinoKind, {required:number, additional:number}> = new Map();
-    for (const minoId of minoKinds) {
+    for (const minoId of tetroMinoKinds) {
         let usedCount = used.get(minoId) ?? 0;
         let required = minos.get(minoId)?.required ?? 0;
         let additional = minos.get(minoId)?.additional ?? 0;
