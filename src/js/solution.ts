@@ -142,26 +142,29 @@ export function addMainSolution(
                 fieldElement.className = "row g-2 mb-3";
                 mainDiv.appendChild(fieldElement);
 
-                for (const packing of packings)
+                if (packings.length > 1)
                 {
-                    let packingProblemKey = packing.packingProblemKey;
-                    let div = appendPackingDiv(fieldElement, packingProblemKey);
-                    for (const solutionKey of packingProblems.get(packingProblemKey)!.solutions)
+                    for (const packing of packings)
                     {
-                        let solution = packingSolutions.get(solutionKey)!;
-                        appendPackingSolutionCanvas(div, solution);
+                        let packingProblemKey = packing.packingProblemKey;
+                        let div = appendPackingDiv(fieldElement, packingProblemKey);
+                        for (const solutionKey of packingProblems.get(packingProblemKey)!.solutions)
+                        {
+                            let solution = packingSolutions.get(solutionKey)!;
+                            appendPackingSolutionCanvas(div, solution);
+                        }
+                        let mark = document.createElement('div');
+                        mark.className = 'col-auto d-flex align-items-center';
+                        if (packing == packings[packings.length - 1]) 
+                        {
+                            mark.innerHTML = '=>';
+                        }
+                        else
+                        {
+                            mark.innerHTML = '+';
+                        }
+                        fieldElement.appendChild(mark);
                     }
-                    let mark = document.createElement('div');
-                    mark.className = 'col-auto d-flex align-items-center';
-                    if (packing == packings[packings.length - 1]) 
-                    {
-                        mark.innerHTML = '=>';
-                    }
-                    else
-                    {
-                        mark.innerHTML = '+';
-                    }
-                    fieldElement.appendChild(mark);
                 }
             }
             
@@ -184,7 +187,7 @@ export function addMainSolution(
                     
                     const minoIndex = mergedSolution.solution[r][c];
                     ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : mergedSolution.minoKinds[minoIndex]);
-            ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 1, cellSize - 1);
+                    ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 1, cellSize - 1);
                 }
             }
         }

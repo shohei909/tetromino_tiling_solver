@@ -5,6 +5,7 @@ import { offset, type State } from '@popperjs/core';
 import { tetroMinoKinds } from '../constants';
 import { checkParity, getParity, parityMessage } from '../tool/parity';
 import { stringifyPackingProblem } from '../tool/identifier';
+import { extractSubField, splitField } from '../tool/split';
 
 (window as any).global = window;
 let usingMarker:null|{} = null;
@@ -330,107 +331,6 @@ export function abortPacking()
     }
 }
 
-// 領域を分割する
-function splitField(offsetX:number, offsetY:number, field: SubField): SubFieldNode[]
-{
-    let grid = field.grid;
-    let rows = grid.length;
-    let cols = grid[0]?.length || 0;
-    let groups: number[][] = [];
-    for (let y = 0; y < rows; y++) {
-        groups.push([]);
-        for (let x = 0; x < cols; x++) {
-            if (grid[y][x]) {
-                groups[y][x] = 0;
-            }
-            else {
-                groups[y][x] = -1;
-            }
-        }
-    }
-    let currentId = 1;
-    function fill(x:number = 0, y:number = 0)
-    {
-        if (x < 0 || x >= cols || y < 0 || y >= rows || groups[y][x] != 0) { return; }
-        groups[y][x] = currentId;
-        fill(x + 1, y);
-        fill(x - 1, y);
-        fill(x, y + 1);
-        fill(x, y - 1); 
-    }
-    for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-            if (groups[y][x] === 0) {
-                fill(x, y);
-                currentId += 1;
-            }
-        }
-    }
-    let results: SubFieldNode[] = [];
-    for (let id = 1; id < currentId; id++)
-    {
-        results.push(extractSubField(offsetX, offsetY, groups, (value) => value === id));
-    }
-
-    // 小さい方から処理する
-    results.sort(compareSubFieldNodes);
-
-    // TODO: 関節点による分割を行う
-    return results;
-}
-function compareSubFieldNodes(a:SubFieldNode, b:SubFieldNode):number
-{
-    if (a.type === 'field' && b.type === 'field') {
-        return a.blockCount - b.blockCount; // 小さい順
-    }
-    if (a.type === 'field') return -1; // fieldが先
-    if (b.type === 'field') return  1; // fieldが先
-    return 0;
-}
-
-function extractSubField<T>(
-    offsetX: number,
-    offsetY: number,
-    grid: T[][],
-    func: (value: T) => boolean
-): SubField
-{
-    let info = getParity(grid, func);
-    let newGrid = grid.slice(info.boundingBox.minY, info.boundingBox.maxY + 1).map(r => r.slice(info.boundingBox.minX, info.boundingBox.maxX + 1).map(func));
-    let rows = newGrid.length;
-    let cols = newGrid[0]?.length || 0;
-    let symmetry90 = true;
-    let symmetry180 = true;
-    function getAt(x:number, y:number): boolean {
-        if (x < 0 || x >= cols || y < 0 || y >= rows) { return false; }
-        return newGrid[y][x];
-    }
-    for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-            if (getAt(x, y) != getAt(cols - x - 1, rows - y - 1))
-            {
-                symmetry180 = false;
-                symmetry90  = false;
-            }
-            if (getAt(x, y) != getAt(rows - y - 1, x))
-            {
-                symmetry90  = false;
-            }
-            if (getAt(x, y) != getAt(y, cols - x - 1))
-            {
-                symmetry90  = false;
-            }
-        }
-    }
-    return {
-        type: 'field',
-        offset: { x: offsetX + info.boundingBox.minX, y: offsetY + info.boundingBox.minY },
-        grid: newGrid,
-        blockCount: info.blockCount,
-        parity: info.parity,
-        symmetryLevel: symmetry90 ? 2 : symmetry180 ? 1 : 0,
-    }
-}
 
 function countMino(
     minoSources: {id: MinoKind, plus: number, minus: number}[], 
