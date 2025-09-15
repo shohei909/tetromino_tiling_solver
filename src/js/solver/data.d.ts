@@ -83,3 +83,12 @@ type StateKey           = Key<string, 'StateKey'>;
 type PackingProblemKey  = Key<string, 'PackingProblemKey'>;
 type PackingSolutionKey = Key<string, 'PackingSolutionKey'>;
 type MainSolutionKey    = Key<string, 'MainSolutionKey'>;
+
+
+type RotationData = {
+    forms:MinoFormData[]
+}
+type MinoFormData = {
+    blocks:{x: number, y: number}[],
+    verticalParity: boolean
+}
