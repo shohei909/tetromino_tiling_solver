@@ -50,11 +50,15 @@ function convertRotationData(rotationData: number[][][]): RotationData {
     for (const rotation of rotationData) {
         let blocks: {x: number, y: number}[] = [];
         let verticalParity = 0;
+        let width = 0;
+        let height = 0;
         for (const [x, y] of rotation) {
             verticalParity += x;
             blocks.push({x, y});
+            if (width <= x) { width = x + 1; }
+            if (height <= y) { height = y + 1; }
         }
-        forms.push({blocks, verticalParity: verticalParity % 2 === 1});
+        forms.push({blocks, width, height, verticalParity: verticalParity % 2 === 1});
     }
     return { forms };
 }

@@ -90,5 +90,7 @@ type RotationData = {
 }
 type MinoFormData = {
     blocks:{x: number, y: number}[],
+    width : number,
+    height: number,
     verticalParity: boolean
 }
