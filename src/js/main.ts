@@ -17,11 +17,13 @@ let drawValue: boolean | null = null;
 
 function createGrid() {
 	let initial = [
-		"0000000001",
-		"0000000111",
-		"1100100111",
-		"1111110111",
+		"1111000000",
+		"1111001001",
+		"1110001111",
 		"1110111111",
+		"1110011111",
+		"1110111111",
+		"1111011111",
 	];
 	const rows = initial.length;
 	const cols = initial[0].length;

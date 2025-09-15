@@ -241,10 +241,10 @@ async function search(
                 }
             }
             // 対称性の削除（おなじミノを使用する若い行を削除）
-            rowHeader.node.unlinkUpperRows(removeNodes);
             // ミノを使い切った場合、同じミノを使う行をすべて削除
             if (rest <= 0) 
             {
+                rowHeader.node.unlinkUpperRows(removeNodes);
                 rowHeader.node.unlinkLowerRows(removeNodes);
             }
             // 行ヘッダーを削除
