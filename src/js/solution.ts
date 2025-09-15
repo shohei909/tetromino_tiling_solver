@@ -1,6 +1,4 @@
-import type { offset, State } from "@popperjs/core";
-import { tetroMinoKinds } from "./constants";
-import { stringifyField, stringifyMinoKinds, stringifyMinos, stringifyPackingProblem as stringifyPackingProblem, stringifyPackingSolution, stringifyStateIdentifier } from "./tool/identifier";
+import { stringifyField, stringifyMinoKinds, stringifyPackingProblem as stringifyPackingProblem, stringifyPackingSolution, stringifyStateIdentifier } from "./tool/identifier";
 
 // ミノとフィールドから
 interface PackingProblemData
@@ -114,7 +112,6 @@ export function addMainSolution(
                 packings: packings,
                 firstMergedSolution: mergedSolution,
             });
-
             let mainDiv = document.getElementById('solve-main-result');
             if (mainDiv == null) {
                 let resultDiv  = document.getElementById('solve-result')!;
@@ -172,8 +169,8 @@ export function addMainSolution(
             let rows = wholeSize.rows;
             let cellSize = 15;
             const canvas = document.createElement('canvas');
-            canvas.width = cols * cellSize;
-            canvas.height = rows * cellSize;
+            canvas.width = cols * cellSize + 1;
+            canvas.height = rows * cellSize + 1;
             fieldElement.appendChild(canvas);
             canvas.className = "result-canvas col-auto";
             const ctx = canvas.getContext('2d');
@@ -181,13 +178,13 @@ export function addMainSolution(
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     ctx.fillStyle = 'rgba(253, 253, 253, 1)';
-                    ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+                    ctx.fillRect(c * cellSize + 0.5, r * cellSize + 0.5, cellSize, cellSize);
                     ctx.strokeStyle = '#b7b7b7ff';
-                    ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
+                    ctx.strokeRect(c * cellSize + 0.5, r * cellSize + 0.5, cellSize, cellSize);
                     
                     const minoIndex = mergedSolution.solution[r][c];
                     ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : mergedSolution.minoKinds[minoIndex]);
-                    ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2);
+            ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 1, cellSize - 1);
                 }
             }
         }
@@ -288,8 +285,8 @@ function appendPackingSolutionCanvas(parent:Element, solution:PackingSolution):v
     const cols = solution.solution[0]?.length || 0;
     const cellSize = 10;
     const canvas = document.createElement('canvas');
-    canvas.width = cols * cellSize;
-    canvas.height = rows * cellSize;
+    canvas.width  = cols * cellSize + 1;
+    canvas.height = rows * cellSize + 1;
     parent.appendChild(canvas);
     canvas.className = "result-canvas col-auto";
     const ctx = canvas.getContext('2d');
@@ -297,13 +294,13 @@ function appendPackingSolutionCanvas(parent:Element, solution:PackingSolution):v
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
             ctx.fillStyle = 'rgba(253, 253, 253, 1)';
-            ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+            ctx.fillRect(c * cellSize + 0.5, r * cellSize + 0.5, cellSize, cellSize);
             ctx.strokeStyle = '#b7b7b7ff';
-            ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
+            ctx.strokeRect(c * cellSize + 0.5, r * cellSize + 0.5, cellSize, cellSize);
             
             const minoIndex = solution.solution[r][c];
             ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : solution.minoKinds[minoIndex]);
-            ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2);
+            ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 1, cellSize - 1);
         }
     }
 }

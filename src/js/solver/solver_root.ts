@@ -283,7 +283,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
 
                 let problem = packingProblems.get(stateId)!;
                 problem.solutions.push(solution);
-                
+
                 // このパッキングの解が必要な部分問題すべてに解を伝える
                 for (const packingContext of problem.contexts)
                 {
@@ -371,9 +371,21 @@ function splitField(offsetX:number, offsetY:number, field: SubField): SubFieldNo
     {
         results.push(extractSubField(offsetX, offsetY, groups, (value) => value === id));
     }
-    // TODO: 領域が小さい順にソートする
+
+    // 小さい方から処理する
+    results.sort(compareSubFieldNodes);
+
     // TODO: 関節点による分割を行う
     return results;
+}
+function compareSubFieldNodes(a:SubFieldNode, b:SubFieldNode):number
+{
+    if (a.type === 'field' && b.type === 'field') {
+        return a.blockCount - b.blockCount; // 小さい順
+    }
+    if (a.type === 'field') return -1; // fieldが先
+    if (b.type === 'field') return  1; // fieldが先
+    return 0;
 }
 
 function extractSubField<T>(

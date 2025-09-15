@@ -51,8 +51,8 @@ function updateGrid() {
 	// 固定幅からセルサイズを計算
 	cellSize = Math.floor(maxCanvasWidth / cols);
 	cellSize = Math.min(cellSize, maxCellSize);
-	canvas.width = cols * cellSize;
-	canvas.height = rows * cellSize;
+	canvas.width = cols * cellSize + 1;
+	canvas.height = rows * cellSize + 1;
 	canvas.style.border = '1px solid #888';
 	canvas.style.cursor = 'pointer';
 
@@ -90,9 +90,9 @@ function drawGrid(canvas: HTMLCanvasElement, grid: boolean[][]) {
 	for (let r = 0; r < grid.length; r++) {
 		for (let c = 0; c < grid[r].length; c++) {
 			ctx.fillStyle = grid[r][c] ? '#b9b9b9ff' : 'white';
-			ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+			ctx.fillRect(c * cellSize + 0.5, r * cellSize + 0.5, cellSize, cellSize);
 			ctx.strokeStyle = '#888';
-			ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
+			ctx.strokeRect(c * cellSize + 0.5, r * cellSize + 0.5, cellSize, cellSize);
 		}
 	}
 }
