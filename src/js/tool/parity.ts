@@ -156,3 +156,139 @@ export function checkParity(
     }
     return 0;
 }
+
+export function restCheckParity(
+    restMinos: Map<MinoKind, {required:number, additional:number}>,
+    parity: Parity
+): number
+{
+    let tMinCount = restMinos.get('T')?.required || 0;
+    let ljMinCount = (restMinos.get('L')?.required || 0) + (restMinos.get('J')?.required || 0);
+    let szMinCount = (restMinos.get('S')?.required || 0) + (restMinos.get('Z')?.required || 0);
+    let oMinCount = restMinos.get('O')?.required || 0;
+    let iMinCount = restMinos.get('I')?.required || 0;
+    let tMaxCount = tMinCount + (restMinos.get('T')?.additional || 0);
+    let ljMaxCount = ljMinCount + (restMinos.get('L')?.additional || 0) + (restMinos.get('J')?.additional || 0);
+    let szMaxCount = szMinCount + (restMinos.get('S')?.additional || 0) + (restMinos.get('Z')?.additional || 0);
+    let oMaxCount = oMinCount + (restMinos.get('O')?.additional || 0);
+    let iMaxCount = iMinCount + (restMinos.get('I')?.additional || 0);
+    
+    // 市松模様のパリティの偏りに、Tミノ数が足りてない場合、解なし
+    if (parity.checkerboardParity > tMaxCount) {
+        return 1;
+    }
+    // Tミノの数が、市松パリティと合わない場合は解なし
+    if (tMaxCount == tMinCount && tMaxCount % 2 != parity.checkerboardParity % 2) {
+        return 2;
+    }
+    // 縦のパリティの偏りに、Tミノ数が足りてない場合、解なし
+    if (parity.verticalParity > tMaxCount + ljMaxCount + iMaxCount * 2) {
+        return 3;
+    }
+    // Tミノの数が0で、縦パリティが合わない場合、解なし
+    if (tMaxCount == 0 && ljMaxCount == ljMinCount && parity.verticalParity % 2 != ljMaxCount % 2) {
+        return 4;
+    }
+    // 横のパリティの偏りに、Tミノ数が足りてない場合、解なし
+    if (parity.horizontalParity > tMaxCount + ljMaxCount + iMaxCount * 2) {
+        return 5;
+    }
+    // Tミノの数が0で、横パリティが合わない場合、解なし
+    if (tMaxCount == 0 && ljMaxCount == ljMinCount && parity.horizontalParity % 2 != ljMaxCount % 2) {
+        return 6;
+    }
+    // 長市松パリティの偏りに、TLJSZミノ数が足りてない場合、解なし
+    if (parity.wideCheckerboardParity > tMaxCount + ljMaxCount + szMaxCount) {
+        return 7;
+    }
+    // Tミノの数が0で、LJミノ数が0で、斜め縞パリティの偶奇がOミノ数と合わない場合、解なし
+    if (tMaxCount == 0 && ljMaxCount == 0 && oMaxCount == oMinCount)
+    {
+        if (parity.diagonalParity0 % 2 != oMaxCount % 2) { return 8; }
+        if (parity.diagonalParity1 % 2 != oMaxCount % 2) { return 8; }
+        if (parity.diagonalParity2 % 2 != oMaxCount % 2) { return 8; }
+        if (parity.diagonalParity3 % 2 != oMaxCount % 2) { return 8; }
+    }
+    // 斜め縞パリティの偏りに、OTLJSZミノ数が足りてない場合、解なし
+    if (parity.maxDiagonalParity > oMaxCount + tMaxCount + ljMaxCount + 2 * szMaxCount) {
+        return 9;
+    }
+    // Oパリティの偏りに、OTLJSZミノ数が足りてない場合、解なし
+    if (parity.oParity > oMaxCount * 2 + tMaxCount + ljMaxCount + szMaxCount) {
+        return 10;
+    }
+    return 0;
+}
+
+export function totalizeParity(fields:SubFieldNode[]):Parity
+{
+    let totalParity: Parity = {
+        checkerboardParity     : 0,
+        verticalParity         : 0,
+        horizontalParity       : 0,
+        wideCheckerboardParity : 0,
+        diagonalParity0        : 0,
+        diagonalParity1        : 0,
+        diagonalParity2        : 0,
+        diagonalParity3        : 0,
+        maxDiagonalParity      : 0,
+        oParity                : 0,
+    };
+    for (const field of fields)
+    {
+        let fieldParity;
+        if (field.type == 'field')
+        {
+            fieldParity = field.parity;
+        }
+        else
+        {
+            let parityList = [];
+            for (let i = 0; i < field.fields.length; i++)
+            {
+                parityList.push(totalizeParity(field.fields[i]));
+            }
+            fieldParity = getMinParity(parityList);
+        }
+        totalParity.checkerboardParity     += fieldParity.checkerboardParity;
+        totalParity.verticalParity         += fieldParity.verticalParity;
+        totalParity.horizontalParity       += fieldParity.horizontalParity;
+        totalParity.wideCheckerboardParity += fieldParity.wideCheckerboardParity;
+        totalParity.diagonalParity0        += fieldParity.diagonalParity0;
+        totalParity.diagonalParity1        += fieldParity.diagonalParity1;
+        totalParity.diagonalParity2        += fieldParity.diagonalParity2;
+        totalParity.diagonalParity3        += fieldParity.diagonalParity3;
+        totalParity.maxDiagonalParity      += fieldParity.maxDiagonalParity;
+        totalParity.oParity                += fieldParity.oParity;
+    }    
+    return totalParity;
+}
+function getMinParity(parityList: Parity[]): Parity
+{
+    let totalParity: Parity = {
+        checkerboardParity     : 0,
+        verticalParity         : 0,
+        horizontalParity       : 0,
+        wideCheckerboardParity : 0,
+        diagonalParity0        : 0,
+        diagonalParity1        : 0,
+        diagonalParity2        : 0,
+        diagonalParity3        : 0,
+        maxDiagonalParity      : 0,
+        oParity                : 0,
+    };
+    for (const parity of parityList)
+    {
+        totalParity.checkerboardParity     = Math.min(totalParity.checkerboardParity    , parity.checkerboardParity    );
+        totalParity.verticalParity         = Math.min(totalParity.verticalParity        , parity.verticalParity        );
+        totalParity.horizontalParity       = Math.min(totalParity.horizontalParity      , parity.horizontalParity      );
+        totalParity.wideCheckerboardParity = Math.min(totalParity.wideCheckerboardParity, parity.wideCheckerboardParity);
+        totalParity.diagonalParity0        = Math.min(totalParity.diagonalParity0       , parity.diagonalParity0       );
+        totalParity.diagonalParity1        = Math.min(totalParity.diagonalParity1       , parity.diagonalParity1       );
+        totalParity.diagonalParity2        = Math.min(totalParity.diagonalParity2       , parity.diagonalParity2       );
+        totalParity.diagonalParity3        = Math.min(totalParity.diagonalParity3       , parity.diagonalParity3       );
+        totalParity.maxDiagonalParity      = Math.min(totalParity.maxDiagonalParity     , parity.maxDiagonalParity     );
+        totalParity.oParity                = Math.min(totalParity.oParity               , parity.oParity               );
+    }
+    return totalParity;
+}

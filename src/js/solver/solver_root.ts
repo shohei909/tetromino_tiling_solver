@@ -3,7 +3,7 @@ import { clearSolutions, addSolution } from '../solution';
 import { startPacking_v1 } from './packing_ver_z3';
 import { offset, type State } from '@popperjs/core';
 import { tetroMinoKinds } from '../constants';
-import { checkParity, getParity, parityMessage } from '../tool/parity';
+import { checkParity, getParity, parityMessage, restCheckParity, totalizeParity } from '../tool/parity';
 import { stringifyPackingProblem } from '../tool/identifier';
 import { extractSubField, splitField } from '../tool/split';
 
@@ -103,6 +103,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
     {
         let result = new Map<MinoKind, number>();
         let subRestMino = field.blockCount / 4; // このサブフィールドに配置するミノ数
+        let restParity = totalizeParity(fields);
 
         // 残りの必須ミノ数
         let restRequiredMino = 0;
@@ -120,6 +121,12 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
             if (minoIndex >= tetroMinoKinds.length)
             {
                 let restMinos = subtractMinos(minos, result);
+                let restParityResult = restCheckParity(restMinos, restParity);
+                if (restParityResult != 0)
+                {
+                    console.log("残りのパリティ違反", parityMessage[restParityResult]);
+                    return;
+                }
 
                 // 全てのミノの数が決定した
                 let subProblemNode:SubProblemContext = {
@@ -134,7 +141,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
                         wholeSize,
                         fieldMinoLength:wholeRestMino,
                     }
-                }
+                };
                 addSubProblem(subProblemNode);
                 return;
             }
