@@ -354,6 +354,7 @@ function countMino(
     {
         for (const [mino, count] of notRequiredMap) {
             requiredMap.set(mino, (requiredMap.get(mino) || 0) + count);
+            notRequiredMap.set(mino, 0);
         }
         if (count === fieldMinoLength) { break; }
         
