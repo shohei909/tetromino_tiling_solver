@@ -6,18 +6,13 @@ import { tetroMinoKinds } from '../constants';
 import { checkParity, getParity, parityMessage, restCheckParity, totalizeParity } from '../tool/parity';
 import { stringifyPackingProblem } from '../tool/identifier';
 import { extractSubField, splitField } from '../tool/split';
+import { startPacking_dlx } from './packing_ver_dlx';
 
 (window as any).global = window;
-let usingMarker:null|{} = null;
-
-// Z3初期化
-let z3:Z3HighLevel & Z3LowLevel;
+export let usingMarker:null|{} = null;
 
 // 問題の事前処理や分割をおこなって、複数のソルバーに投げる
 export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKind, plus: number, minus: number}[]) {
-    if (z3 == null) { z3 = await init(); }
-    z3.em.PThread.terminateAllThreads(); // PThreadにアクセス可能か確認
-    
     // 処理の中断用マーカー
     let currentMarker = {}
     usingMarker = currentMarker;
@@ -154,7 +149,7 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
 
             // ミノの数を決定する
             let max = required + additional;
-            if (max > wholeRestMino) { max = subRestMino; }
+            if (max > subRestMino) { max = subRestMino; }
             let i = 0;
             if (minoIndex == tetroMinoKinds.length - 1) { i = subRestMino; } // 最後のミノは必ず残りを全て使う
 
@@ -280,10 +275,8 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
             return; // 解なし
         }
         console.log("部分問題を開始", context.problem);
-        startPacking_v1(
-            z3,
-            tCount,
-            ljCount,
+        startPacking_dlx(
+            currentMarker,
             context.problem,
             (solution) => {
                 if (usingMarker != currentMarker) { return; }
@@ -301,7 +294,6 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
             onFinished
         );
     }
-
     if (usingMarker != currentMarker) { return; }
 
     let counter = 0;
@@ -326,7 +318,6 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
 
 export function abortPacking()
 {
-    if (z3) { z3.em.PThread.terminateAllThreads(); }
     if (usingMarker != null) 
     {
         usingMarker = null;
