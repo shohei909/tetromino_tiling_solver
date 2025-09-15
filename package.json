@@ -11,8 +11,7 @@
     "@popperjs/core": "^2.11.8",
     "bootstrap": "5.3.8",
     "canvas": "^3.2.0",
-    "startbootstrap-grayscale": "^7.0.6",
-    "z3-solver": "^4.15.3"
+    "startbootstrap-grayscale": "^7.0.6"
   },
   "devDependencies": {
     "sass": "1.77.8",

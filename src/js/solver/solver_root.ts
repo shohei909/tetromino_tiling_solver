@@ -1,7 +1,4 @@
-import { init, type Arith, type Bool, type Z3HighLevel, type Z3LowLevel } from 'z3-solver';
 import { clearSolutions, addSolution } from '../solution';
-import { startPacking_v1 } from './packing_ver_z3';
-import { offset, type State } from '@popperjs/core';
 import { tetroMinoKinds } from '../constants';
 import { checkParity, getParity, parityMessage, restCheckParity, totalizeParity } from '../tool/parity';
 import { stringifyPackingProblem } from '../tool/identifier';
