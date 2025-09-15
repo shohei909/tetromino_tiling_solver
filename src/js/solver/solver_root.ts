@@ -26,6 +26,10 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
 
     // 配置対象マスの数を数える
     let info = extractSubField(0, 0, grid, v => v);
+
+    // トリミング
+    info.offset = { x: 0, y: 0 };
+    grid = info.grid;
     
     // 事前チェック
     errorDiv.hidden = true;
