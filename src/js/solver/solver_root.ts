@@ -281,8 +281,11 @@ export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKin
                 if (usingMarker != currentMarker) { return; }
                 console.log("解が見つかりました", solution);
 
+                let problem = packingProblems.get(stateId)!;
+                problem.solutions.push(solution);
+                
                 // このパッキングの解が必要な部分問題すべてに解を伝える
-                for (const packingContext of packingProblems.get(stateId)!.contexts)
+                for (const packingContext of problem.contexts)
                 {
                     solved(packingContext, solution);
                 }

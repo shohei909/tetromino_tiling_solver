@@ -144,6 +144,28 @@ export function addMainSolution(
                 fieldElement.id = id;
                 fieldElement.className = "row g-2 mb-3";
                 mainDiv.appendChild(fieldElement);
+
+                for (const packing of packings)
+                {
+                    let packingProblemKey = packing.packingProblemKey;
+                    let div = appendPackingDiv(fieldElement, packingProblemKey);
+                    for (const solutionKey of packingProblems.get(packingProblemKey)!.solutions)
+                    {
+                        let solution = packingSolutions.get(solutionKey)!;
+                        appendPackingSolutionCanvas(div, solution);
+                    }
+                    let mark = document.createElement('div');
+                    mark.className = 'col-auto d-flex align-items-center';
+                    if (packing == packings[packings.length - 1]) 
+                    {
+                        mark.innerHTML = '=>';
+                    }
+                    else
+                    {
+                        mark.innerHTML = '+';
+                    }
+                    fieldElement.appendChild(mark);
+                }
             }
             
             let cols = wholeSize.cols;
@@ -245,37 +267,45 @@ function addPackingProblem(problem: PackingProblem, solution: PackingSolution, i
         let elements = fieldElement.getElementsByClassName(className);
         if (elements == null || elements.length == 0) 
         {
-            let element = document.createElement('div');
-            element.className = className + " col-auto row g-2";
-            fieldElement.appendChild(element);
+            appendPackingDiv(fieldElement, packingProblemKey);
         }
         for (let div of document.getElementsByClassName(className)) {
-            let grid = problem.field.grid;
-            const rows = grid.length;
-            const cols = grid[0]?.length || 0;
-            const cellSize = 10;
-            const canvas = document.createElement('canvas');
-            canvas.width = cols * cellSize;
-            canvas.height = rows * cellSize;
-            div.appendChild(canvas);
-            canvas.className = "result-canvas col-auto";
-            const ctx = canvas.getContext('2d');
-            if (!ctx) continue;
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    ctx.fillStyle = 'rgba(253, 253, 253, 1)';
-                    ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
-                    ctx.strokeStyle = '#b7b7b7ff';
-                    ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
-                    
-                    const minoIndex = solution.solution[r][c];
-                    ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : solution.minoKinds[minoIndex]);
-                    ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2);
-                }
-            }
+            appendPackingSolutionCanvas(div, solution);
         }
     }
     return packingProblemKey;
+}
+function appendPackingDiv(parent:HTMLElement, packingProblemKey:string):HTMLElement
+{
+    let element = document.createElement('div');
+    element.className = 'packing-' + packingProblemKey + " packing col-auto d-flex align-items-center";
+    parent.appendChild(element);
+    return element;
+}
+function appendPackingSolutionCanvas(parent:Element, solution:PackingSolution):void
+{
+    const rows = solution.solution.length;
+    const cols = solution.solution[0]?.length || 0;
+    const cellSize = 10;
+    const canvas = document.createElement('canvas');
+    canvas.width = cols * cellSize;
+    canvas.height = rows * cellSize;
+    parent.appendChild(canvas);
+    canvas.className = "result-canvas col-auto";
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            ctx.fillStyle = 'rgba(253, 253, 253, 1)';
+            ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+            ctx.strokeStyle = '#b7b7b7ff';
+            ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
+            
+            const minoIndex = solution.solution[r][c];
+            ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : solution.minoKinds[minoIndex]);
+            ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2);
+        }
+    }
 }
 
 function getMinoColor(minoId: string): string {
