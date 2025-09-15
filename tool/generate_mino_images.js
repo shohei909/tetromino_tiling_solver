@@ -4,12 +4,12 @@ const path = require('path');
 
 const minos = [
   { name: 'I', color: '#00BCD4', shape: [[0,0,0,0],[1,1,1,1]] },
-  { name: 'O', color: '#FFEB3B', shape: [[1,1],[1,1]] },
+  { name: 'O', color: '#ffe53b', shape: [[1,1],[1,1]] },
   { name: 'T', color: '#9C27B0', shape: [[0,1,0],[1,1,1]] },
-  { name: 'S', color: '#4CAF50', shape: [[0,1,1],[1,1,0]] },
+  { name: 'S', color: '#27c52c', shape: [[0,1,1],[1,1,0]] },
   { name: 'Z', color: '#F44336', shape: [[1,1,0],[0,1,1]] },
   { name: 'J', color: '#3F51B5', shape: [[1,0,0],[1,1,1]] },
-  { name: 'L', color: '#FF9800', shape: [[0,0,1],[1,1,1]] },
+  { name: 'L', color: '#ff9100', shape: [[0,0,1],[1,1,1]] },
 ];
 
 const outDir = path.join(__dirname, '..', 'public', 'img');

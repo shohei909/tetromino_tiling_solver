@@ -310,11 +310,11 @@ function getMinoColor(minoId: string): string {
         case 'I': return "#00BCD4";
         case 'O': return "#ffe53b";
         case 'T': return "#9C27B0";
-        case 'S': return "#4CAF50";
+        case 'S': return "#27c52c";
         case 'Z': return "#F44336";
         case 'J': return "#3F51B5";
         case 'L': return "#ff9100";
-        default: return '#e0e0ff';
+        default: return '#e9e9e9ff';
     }
 }
 
