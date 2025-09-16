@@ -26,6 +26,7 @@ interface MainSolutionData
     packings: PackingProblemReference[], // この解を構成する部分問題のキー文字列の配列
     minoKinds: MinoKind[], // この解で使用しているミノの種類
     locked: boolean, // 解が多すぎて省略されている場合は true
+    packingSolutions: Set<PackingSolutionKey>, // すでに表示されている解を列挙
 }
 type PackingProblemReference = {
     offset:{ x: number, y: number }, 
@@ -51,11 +52,11 @@ export function addSolution(wholeSize:{rows:number, cols:number}, problem: SubPr
 {
     let isLast = problem.rest.subFields.length == 0;
     let isDivided = !isLast || problem.stateKey != "";
-    let packingProblemKey = addPackingProblem(wholeSize,problem.problem, solution, isDivided);
+    let { packingProblemKey, packingSolutionKey } = addPackingProblem(wholeSize,problem.problem, solution, isDivided);
     let stateKey = addSubSolution(problem, solution, packingProblemKey);
     if (isLast)
     {
-        addMainSolution(wholeSize, problem, packingProblemKey, isDivided);
+        addMainSolution(wholeSize, problem, packingProblemKey, packingSolutionKey, isDivided);
     }
     return stateKey;
 }
@@ -63,6 +64,7 @@ export function addMainSolution(
     wholeSize:{rows:number, cols:number}, 
     problem: SubProblemContext, 
     packingProblemKey: PackingProblemKey,
+    packingSolutionKey: PackingSolutionKey,
     isDivided:boolean = true
 ):void
 {
@@ -103,7 +105,7 @@ export function addMainSolution(
         let exists = mainSolutions.has(key);
         if (!exists)
         {
-            mainSolutions.set(key, { packings, minoKinds, locked: false });
+            mainSolutions.set(key, { packings, minoKinds, locked: false, packingSolutions: new Set<PackingSolutionKey>() });
             let mainDiv = document.getElementById('solve-main-result');
             if (mainDiv == null) {
                 let resultDiv  = document.getElementById('solve-result')!;
@@ -166,18 +168,22 @@ export function addMainSolution(
                 fieldElement.appendChild(innerElement);
             }
         }
-        refreshMainSolution(wholeSize, key, isDivided);
+        refreshMainSolution(wholeSize, key, packingSolutionKey, isDivided);
     }
 }
 
-function refreshMainSolution(wholeSize:{cols: number, rows: number}, key: MainSolutionKey, isDivided:boolean):void
+function refreshMainSolution(wholeSize:{cols: number, rows: number}, key: MainSolutionKey, packingSolutionKey:PackingSolutionKey, isDivided:boolean):void
 {   
     let mainSolution = mainSolutions.get(key)!; 
     if (mainSolution.locked) { return; } // すでに多すぎて省略されている場合は処理しない
-    
+    if (mainSolution.packingSolutions.has(packingSolutionKey)) 
+    { 
+        return; // すでに表示済み
+    }
+    mainSolution.packingSolutions.add(packingSolutionKey);
+
     let id = 'mainfield-' + key;
     let fieldElement = document.getElementById(id)!;
-    fieldElement.innerHTML = '';
     let cols = wholeSize.cols;
     let rows = wholeSize.rows;
     let cellSize = 15;
@@ -232,30 +238,35 @@ function refreshMainSolution(wholeSize:{cols: number, rows: number}, key: MainSo
         }
     }
     let stack = [-1];
-    let count = 0;
+    let count = fieldElement.childElementCount; // すでに表示されている解の数
     while (true)
     {
         if (stack.length == 0) break;
         if (solutions.length == packings.length)
         {
-            count++;
-
-            // 多すぎて表示できない場合は省略
-            if (
-                (isDivided && count > 100) ||
-                (!isDivided && count > 1000)
-            )
+            // 新たな解を発見
+            if (solutions.indexOf(packingSolutionKey) != -1)
             {
-                const div = document.createElement('div');
-                div.className = "col-auto d-flex align-items-center";
-                div.textContent = "…など";
-                fieldElement.appendChild(div);
-                mainSolution.locked = true;
-                break;
-            }
+                count++;
 
+                // 多すぎて表示できない場合は省略
+                if (
+                    (isDivided && count > 100) ||
+                    (!isDivided && count > 2000)
+                )
+                {
+                    const div = document.createElement('div');
+                    div.className = "col-auto d-flex align-items-center";
+                    div.textContent = "…など";
+                    fieldElement.appendChild(div);
+                    mainSolution.locked = true;
+                    break;
+                }
+                // 解を追加
+                addSolution();
+            }
+            
             // 解を追加した後、戻る
-            addSolution();
             stack.pop();
             solutions.pop();
             continue;
@@ -302,7 +313,10 @@ export function addSubSolution(problem: SubProblemContext, solution: PackingSolu
     return stateKey;
 }
 
-function addPackingProblem(wholeSize:{rows:number, cols:number}, problem: PackingProblem, solution: PackingSolution, isDivided:boolean):PackingProblemKey
+function addPackingProblem(wholeSize:{rows:number, cols:number}, problem: PackingProblem, solution: PackingSolution, isDivided:boolean):{
+    packingProblemKey: PackingProblemKey,
+    packingSolutionKey: PackingSolutionKey
+}
 {
     let fieldKey = stringifyField(problem.field.grid);
     let packingSolutionKey = stringifyPackingSolution(solution);
@@ -323,7 +337,7 @@ function addPackingProblem(wholeSize:{rows:number, cols:number}, problem: Packin
     if (solutions.has(solutionKey))
     {
         // すでに登録済み
-        return packingProblemKey;
+        return { packingProblemKey, packingSolutionKey };
     }
 
     solutions.add(solutionKey);
@@ -357,10 +371,10 @@ function addPackingProblem(wholeSize:{rows:number, cols:number}, problem: Packin
         }
         for (let mainSolutionKey of packingProblem.mainSolutions)
         {
-            refreshMainSolution(wholeSize, mainSolutionKey, isDivided);
+            refreshMainSolution(wholeSize, mainSolutionKey, solutionKey, isDivided);
         }
     }
-    return packingProblemKey;
+    return { packingProblemKey, packingSolutionKey };
 }
 function appendPackingDiv(parent:HTMLElement, packingProblemKey:string):HTMLElement
 {
