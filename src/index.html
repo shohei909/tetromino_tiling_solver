@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <script> if (navigator.serviceWorker) { navigator.serviceWorker.register('/tetromino_packing_solver/sw.js', { scope: '/tetromino_packing_solver/' }) } </script>
   <script type="module" src="js/main.ts"></script>
-  <title>逆引きテトリス</title>
+  <title>テトタイルソルバー</title>
 </head>
 <body class="bg-light">
   <div style="min-width:500px;margin:40px 10px 0 10px; margin:10px;padding:24px;" class="bg-white rounded shadow-sm">
@@ -15,8 +15,8 @@
         GitHub
       </a>
     </div>
-    <h1 class="text-center mb-4">逆引きテトリス</h1>
-    <div class="text-center form-text mb-4">あたえられた地形に7種類のミノを敷き詰めます</div>
+    <h1 class="text-center mb-4">テトタイルソルバー</h1>
+    <div class="text-center form-text mb-4">あたえられた地形に7種類のテトロミノを敷き詰めます</div>
     <div id="alert" class="text-center alert alert-danger" role="alert" hidden></div>
     <div id="problem">
       <div class="row g-4">
@@ -89,7 +89,7 @@
       </div>
       <div id="solve-error" class="text-center alert alert-danger" role="alert" hidden></div>
       <button id="grid-solve" class="btn btn-primary w-100" style="margin-top:40px;">逆引き実行</button>
-      <div class="text-center form-text mb-4">※ ライン消去は考慮してません<br />※ セットアップ率は計算してないので、実際に組める確率が0%の可能性もあります</div>
+      <div class="text-center form-text mb-4">※ ライン消去は考慮してません<br />※ セットアップ率は計算してないので、セットアップ率が0%になる配置もリストアップされます</div>
     </div>
     <div id="solve-message" class="mb-4" role="alert" style="margin:10px;"></div>
     <button id="abort-button" class="btn btn-danger" hidden>中断</button>
