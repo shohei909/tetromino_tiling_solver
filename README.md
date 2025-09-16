@@ -88,9 +88,9 @@ SATソルバー、例えば [splr]() を使って解く
 * ミノごとに有効な配置方法を全列挙して、そのいずれかが満たされること
   * 無効な配置方法が枝刈りできるのが強そう
 
-対称性を除去する制約は簡単には張れない
-案3が十分に高速だったので、未実装
+対称性を除去する制約は簡単には張れなそう
 
+案3が十分に高速だったので、未実装
 
 ### 領域へのミノの敷き詰め案3（DLX）
 
@@ -133,9 +133,11 @@ Algorithm X + Dancing Links（DLX）を使って解く。
 ここでは、ある地形を白黒の市松模様で塗り分けたときの 「(黒マス数-白マス数)の絶対値 / 2」 を 「市松パリティの偏り」 と呼ぶことにする
 
 * ① 市松パリティの偏りの偶奇と、Tミノの個数の偶奇が一致する。
+
 例：https://fumen.zui.jp/?D115@AhQpwhQpwhFewhQpwhQpFeQpwhQpwhFewhQpwhQpMe?AgWzBlPp9BQrDfE2Ss9Blvs2AEqDfETorwBlvs2AjxDfETo?SBBlvs2A2HEfEVY9AClvs2A4BEfETY12BwXHDBQxLSA1Q8A?BwX3JBmBhRA1d8UByX3JB3UFSA1dkRBxXHDBQEFSA1g+AB0?X3JBUY2AA6filwhFeglRpwhFeg0RpwhFei0whjegWAegWGe?AtQpwwQpFeglAtglwwFeAtglAtglMeAAP3AUYHDBQWOSA1d?s2BFYHDBQxLSA1gk2ACYPNB1icRA1d0KBGY3JBwCqRAVyXO?BwX3JBQ4MBA
 
 * ② 市松パリティの偏り <= Tミノの個数
+
 例：https://fumen.zui.jp/?D115@AhQpwhQpwhQpDeQpwhQpwhQpFeQpwhQpwhQpDeQpwh?QpwhQpMeAgWzBlPp9BQrDfE2Ss9Blvs2AEqDfETorwBlvs2?AjxDfEToSBBlvs2A2HEfEVY9AClvs2A4BEfETY12ByXHDBQ?xLSA1Q8ABwX3JBmBhRA1d8UByX3JB3UFSA1dkRBxXHDBQEF?SA1g+AB0X3JBUY2AAAhglAegWAegWDeglAtglwwglFeAtg0?QpAtglDeAtg0QpwwglMeAAP4AUYHDBQWOSA1ds2BFYHDBQx?LSA1gk2ACYPNB1icRA1d0KBmrDfEVYUzBl/m9BFwDfE038v?B
 
 
