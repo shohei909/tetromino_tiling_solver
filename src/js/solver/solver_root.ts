@@ -5,7 +5,6 @@ import { stringifyPackingProblem } from '../tool/identifier';
 import { extractSubField, splitField } from '../tool/split';
 import { startPacking_dlx } from './packing_ver_dlx';
 
-(window as any).global = window;
 export let usingMarker:null|{} = null;
 
 // 問題の事前処理や分割をおこなって、複数のソルバーに投げる
