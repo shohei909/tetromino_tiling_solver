@@ -25,6 +25,7 @@ interface MainSolutionData
 {
     packings: PackingProblemReference[], // この解を構成する部分問題のキー文字列の配列
     minoKinds: MinoKind[], // この解で使用しているミノの種類
+    locked: boolean, // 解が多すぎて省略されている場合は true
 }
 type PackingProblemReference = {
     offset:{ x: number, y: number }, 
@@ -101,7 +102,7 @@ export function addMainSolution(
         let exists = mainSolutions.has(key);
         if (!exists)
         {
-            mainSolutions.set(key, { packings, minoKinds });
+            mainSolutions.set(key, { packings, minoKinds, locked: false });
             let mainDiv = document.getElementById('solve-main-result');
             if (mainDiv == null) {
                 let resultDiv  = document.getElementById('solve-result')!;
@@ -178,6 +179,7 @@ function refreshMainSolution(wholeSize:{cols: number, rows: number}, key: MainSo
     let cellSize = 15;
 
     let mainSolution = mainSolutions.get(key)!; 
+    if (mainSolution.locked) { return; } // すでに多すぎて省略されている場合は処理しない
     let packings = mainSolution.packings;
     let solutionTable:PackingSolutionKey[][] = [];
     for (let packing of packings)
@@ -237,12 +239,13 @@ function refreshMainSolution(wholeSize:{cols: number, rows: number}, key: MainSo
             count++;
 
             // 多すぎて表示できない場合は省略
-            if (count > 50)
+            if (count > 100)
             {
                 const div = document.createElement('div');
                 div.className = "col-auto d-flex align-items-center";
                 div.textContent = "…など";
                 fieldElement.appendChild(div);
+                mainSolution.locked = true;
                 break;
             }
 
