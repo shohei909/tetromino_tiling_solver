@@ -1,4 +1,4 @@
-import { stringifyField, stringifyMinoKinds, stringifyPackingProblem as stringifyPackingProblem, stringifyPackingSolution, stringifyStateIdentifier } from "./tool/identifier";
+import { stringifyField, stringifyPackingProblem as stringifyPackingProblem, stringifyPackingSolution, stringifyStateIdentifier } from "./tool/identifier";
 
 // ミノとフィールドから
 interface PackingProblemData
@@ -114,17 +114,19 @@ export function addMainSolution(
                 mainDiv.innerHTML = `<h2>結果</h2>`;
                 resultDiv.prepend(mainDiv);
             }
-            let minoGroupKey = stringifyMinoKinds(minoKinds);
+
+            let sortedMinos = minoKinds.slice().sort();
+            let minoGroupKey = sortedMinos.join('');
             let minoGroupDiv = document.getElementById('solve-mino-' + minoGroupKey);
             if (minoGroupDiv == null) 
             {
                 minoGroupDiv = document.createElement('div');
                 minoGroupDiv.id = 'solve-mino-' + minoGroupKey;
                 let images = '';
-                for (const minoKind of minoKinds) {
+                for (const minoKind of sortedMinos) {
                     images += `<img src="img/${minoKind}.png" alt="${minoKind}" class="mino-icon">`;
                 }
-                minoGroupDiv.innerHTML = `<div>${images}</div><div></div>`;
+                minoGroupDiv.innerHTML = `<div>${images}</div>`;
                 mainDiv.appendChild(minoGroupDiv);
             }
             let id = 'mainfield-outer-' + key;
@@ -134,7 +136,7 @@ export function addMainSolution(
                 fieldElement = document.createElement('div');
                 fieldElement.id = id;
                 fieldElement.className = "row g-2 mb-3";
-                mainDiv.appendChild(fieldElement);
+                minoGroupDiv.appendChild(fieldElement);
                 
                 if (packings.length > 1)
                 {

@@ -29,6 +29,7 @@ function createGrid() {
 			"1110111111",
 			"1111011111",
 		];
+		(document.getElementById('minus-T') as HTMLInputElement).value = "1";
 		const rows = initial.length;
 		const cols = initial[0].length;
 		(document.getElementById('cols') as HTMLInputElement).value = cols.toString();
@@ -140,11 +141,12 @@ function resizeGrid()
 
 // グリッドをハッシュ文字列に変換
 function gridToHash(grid: boolean[][]): string {
-	let buffer = new ArrayBuffer(2 + Math.ceil((grid.length * grid[0].length) / 2));
+	let buffer = new ArrayBuffer(20 + Math.ceil((grid.length * grid[0].length) / 2));
 	let row = grid.length;
 	let col = grid[0].length;
 	let dataView = new DataView(buffer);
 	let offset = 0;
+    dataView.setUint8(offset++,   0); // version
 	dataView.setUint8(offset++, row);
 	dataView.setUint8(offset++, col);
     let byte = 0;
@@ -166,6 +168,11 @@ function gridToHash(grid: boolean[][]): string {
     if (bitIndex > 0) {
         dataView.setUint8(offset++, byte);
     }
+	for (let plusMinus of getPlusMinus())
+	{
+		dataView.setUint8(offset++, plusMinus.plus);
+		dataView.setUint8(offset++, plusMinus.minus);
+	}
     return encode(buffer);
 }
 
@@ -179,6 +186,7 @@ function hashToGrid(hash: string): {
 	let buffer = decode(hash);
 	let dataView = new DataView(buffer);
 	let offset = 0;
+    offset++; // version
     const rows = dataView.getUint8(offset++);
     const cols = dataView.getUint8(offset++);
     const grid: boolean[][] = [];

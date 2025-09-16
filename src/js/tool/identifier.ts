@@ -11,10 +11,6 @@ export function stringifyStateIdentifier(id:StateIdentifier):StateKey
     return stringifyIdentifier(id.consumedMinos, id.filledField) as StateKey;
 }
 
-export function stringifyMinoKinds(minos:MinoKind[]): string
-{
-    return minos.slice().sort().join('');
-}
 export function stringifyMinos(minos:Map<MinoKind, number>): string
 {
     return stringifyIdentifier(minos, [[]]);
