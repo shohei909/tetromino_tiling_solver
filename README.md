@@ -124,46 +124,50 @@ Algorithm X + Dancing Links（DLX）を使って解く。
 ## 解答の連結時の動的計画法
 分割した問題を解決していく過程で、そこまでで使用したミノとフィールドの形状が一致する場合がある。この際、その後の問題を重複して解かないように、ミノ・フィールドからキーを作って、途中までの解答を辞書に格納していく
 
-## パリティについて
-パリティを使うことで、領域へのミノの敷き詰めを開始する前に、特定のミノの組み合わせでは絶対に領域の敷き詰めができないことを判定できる
+## 「パリティの制約により、そのミノでは領域敷き詰めできない」には2種類ある
+
+ある領域へのミノの敷き詰めを考える場合に、特定のミノの組み合わせでは絶対に領域の敷き詰めができないことを、パリティを用いた2種類の制約で判定できる
+
+（ここではライン消去は考えない場合の話をする）
 
 ### 市松パリティ
 ある地形を敷き詰める場合、Tミノ数は市松模様の塗り分けに対して、2種類の制約を両方満たす必要がある
 
-ここでは、ある地形を白黒の市松模様で塗り分けたときの 「(黒マス数-白マス数)の絶対値 / 2」 を 「市松パリティの偏り」 と呼ぶことにする
+塗り方： https://fumen.zui.jp/?D115@AhAtg0Atg0Feg0Atg0AtFeAtg0Atg0Feg0Atg0AtMe?AgH
 
-* ① 市松パリティの偏りの偶奇と、Tミノの個数の偶奇が一致する。
+ここでは、ある地形を青と赤の市松模様で塗り分けたときの 「(青マス数-赤マス数)の絶対値 / 2」 を 「市松パリティの偏り」 と呼ぶことにする
 
-例：https://fumen.zui.jp/?D115@AhQpwhQpwhFewhQpwhQpFeQpwhQpwhFewhQpwhQpMe?AgWzBlPp9BQrDfE2Ss9Blvs2AEqDfETorwBlvs2AjxDfETo?SBBlvs2A2HEfEVY9AClvs2A4BEfETY12BwXHDBQxLSA1Q8A?BwX3JBmBhRA1d8UByX3JB3UFSA1dkRBxXHDBQEFSA1g+AB0?X3JBUY2AA6filwhFeglRpwhFeg0RpwhFei0whjegWAegWGe?AtQpwwQpFeglAtglwwFeAtglAtglMeAAP3AUYHDBQWOSA1d?s2BFYHDBQxLSA1gk2ACYPNB1icRA1d0KBGY3JBwCqRAVyXO?BwX3JBQ4MBA
-
-* ② 市松パリティの偏り <= Tミノの個数
-
-例：https://fumen.zui.jp/?D115@AhQpwhQpwhQpDeQpwhQpwhQpFeQpwhQpwhQpDeQpwh?QpwhQpMeAgWzBlPp9BQrDfE2Ss9Blvs2AEqDfETorwBlvs2?AjxDfEToSBBlvs2A2HEfEVY9AClvs2A4BEfETY12ByXHDBQ?xLSA1Q8ABwX3JBmBhRA1d8UByX3JB3UFSA1dkRBxXHDBQEF?SA1g+AB0X3JBUY2AAAhglAegWAegWDeglAtglwwglFeAtg0?QpAtglDeAtg0QpwwglMeAAP4AUYHDBQWOSA1ds2BFYHDBQx?LSA1gk2ACYPNB1icRA1d0KBmrDfEVYUzBl/m9BFwDfE038v?B
-
+* 制約① 市松パリティの偏りの偶奇と、Tミノの個数の偶奇は一致する。
+  * 例：https://fumen.zui.jp/?D115@AhAtg0Atg0Feg0Atg0AtFeAtg0Atg0Feg0Atg0AtMe?AgWzBlPp9BQrDfE2Ss9Blvs2AEqDfETorwBlvs2AjxDfETo?SBBlvs2A2HEfEVY9AClvs2A4BEfETY12BwXHDBQxLSA1Q8A?BwX3JBmBhRA1d8UByX3JB3UFSA1dkRBxXHDBQEFSA1g+AB0?X3JBUY2AA6filwhFeglRpwhFeg0RpwhFei0whjewSQLwSQL?FeQaglAeglFewhQawhGeQawhQawhMeAAP3AUYHDBQWOSA1d?s2BFYHDBQxLSA1gk2ACYPNB1icRA1d0KBGY3JBwCqRAVyXO?BwX3JBQ4MBA
+* 制約② 市松パリティの偏り <= Tミノの個数
+  * 例：https://fumen.zui.jp/?D115@AhAtg0Atg0AtDeAtg0Atg0AtFeAtg0Atg0AtDeAtg0?Atg0AtMeAgWzBlPp9BQrDfE2Ss9Blvs2AEqDfETorwBlvs2?AjxDfEToSBBlvs2A2HEfEVY9AClvs2A4BEfETY12ByXHDBQ?xLSA1Q8ABwX3JBmBhRA1d8UByX3JB3UFSA1dkRBxXHDBQEF?SA1g+AB0X3JBUY2AAAhwhQLwSQLwSDewhQawhAewhFeQpwh?glQawhDeQpwhglAewhMeAAP4AUYHDBQWOSA1ds2BFYHDBQx?LSA1gk2ACYPNB1icRA1d0KBmrDfEVYUzBl/m9BFwDfE038v?B
+    * この例では偏りは偶数だが、Tミノ数0では敷き詰めできない
 
 ### 縦パリティ
-ある地形を敷き詰める場合、LJ・T縦・I縦の数は縦縞の2地形に対して、2種類の制約を両方満たす必要がある
+ある地形を敷き詰める場合、LJ・T縦・I縦の数は縦縞の塗分けに対して、2種類の制約を両方満たす必要がある
 
-ここでは、ある地形を白黒の縦縞で塗り分けたときの 「(黒マス数-白マス数)の絶対値 / 2」 を 「縦パリティの偏り」 と呼ぶことにする
+塗り方： https://fumen.zui.jp/?D115@AhAtg0Atg0FeAtg0Atg0FeAtg0Atg0FeAtg0Atg0Me?AgH
 
-* ① 縦パリティの偏りの偶奇と、Lミノ+Jミノ+T縦の偶奇が一致する。
-* ② 縦パリティの偏り <= Lミノ+Jミノ+T縦+2×I縦
 
+ここでは、ある地形を青と赤の縦縞で塗り分けたときの 「(青マス数-赤マス数)の絶対値 / 2」 を 「縦パリティの偏り」 と呼ぶことにする
+
+* 制約① 縦パリティの偏りの偶奇と、Lミノ+Jミノ+T縦の偶奇が一致する。
+* 制約② 縦パリティの偏り <= Lミノ+Jミノ+T縦+2×I縦
 
 ### 横パリティ
 ある地形を敷き詰める場合、LJ・T横・I横の数は横パリティに対して、2種類の制約を両方満たす必要がある
 
-ここでは、ある地形を白黒の横縞で塗り分けたときの 「(黒マス数-白マス数)の絶対値 / 2」 を 「横パリティの偏り」 と呼ぶことにする
+ここでは、ある地形を青と赤の横縞で塗り分けたときの 「(青マス数-赤マス数)の絶対値 / 2」 を 「横パリティの偏り」 と呼ぶことにする
 
-* ① 横パリティの偏りの偶奇と、Lミノ+Jミノ+T横の偶奇が一致する。
-* ② 横パリティの偏り <= Lミノ+Jミノ+T横+2×I横
+* 制約① 横パリティの偏りの偶奇と、Lミノ+Jミノ+T横の偶奇が一致する。
+* 制約② 横パリティの偏り <= Lミノ+Jミノ+T横+2×I横
 
 ### 発展
 ここでは、①を偶奇制約、② を閾値制約と呼ぶことにする。
 閾値制約については縦横市松以外の塗分けでも使用できる
 
 #### 横長市松パリティ
-塗り方：https://fumen.zui.jp/?D115@+gxhRpxhRpBeRpxhRpxhBexhRpxhRpBeRpxhRpxhKe?AgH
+塗り方： https://fumen.zui.jp/?D115@+gh0Bth0BtBeBth0Bth0Beh0Bth0BtBeBth0Bth0Ke?AgH
 
 * このパリティの偏り <= T+L+J+S横+Z横
   * I・O・S縦・Z縦は0変動
@@ -174,9 +178,9 @@ Algorithm X + Dancing Links（DLX）を使って解く。
 
 
 #### 斜め縞パリティ
-塗り方: https://fumen.zui.jp/?D115@rgRpxhRpDeQpxhRpwhDexhRpxhDewhRpxhQpDeRpxh?RpDeQpxhRpwhLeAgH
+塗り方: https://fumen.zui.jp/?D115@rgBth0BtDeAth0Btg0Deh0Bth0Deg0Bth0AtDeBth0?BtDeAth0Btg0LeAgH
 
-* ①偶奇制約: TJLが無い場合、このパリティ偏りの偶奇はO数の偶奇は一致する
+* ①偶奇制約: TJLが無い場合、このパリティ偏りの偶奇とO数の偶奇は一致する
 * ②閾値制約: パリティの偏り <= O+T+L+J+2×S+2×Z
   * Iは0変動
   * Oは1変動
@@ -185,20 +189,22 @@ Algorithm X + Dancing Links（DLX）を使って解く。
 
 
 #### Oパリティ
-例えば: https://fumen.zui.jp/?D115@/gxhRpxhDexhRpxhDeRpxhRpDeRpxhRpLeAgH
+塗り方: https://fumen.zui.jp/?D115@/gxhRpxhDexhRpxhDeRpxhRpDeRpxhRpLeAgH
 
 このパリティの偏り <= T+L+J+S+Z+2×O
 * Iは0変動
 
-使える例: https://fumen.zui.jp/?v115@/v115@tgxhHexhFexhRpxhDexhRpxhFexhHexhNeAgH
+使える例: https://fumen.zui.jp/?D115@tgh0Heh0Feh0Bth0Deh0Bth0Feh0Heh0NeAgH
 
 この地形は偏り6で5ミノなので、Oが1つ以上必要
 
 #### その他
-https://fumen.zui.jp/?D115@/gSpyhDeyhSpDeSpyhDeyhSpLeAgW0AlfLwByhjRA1?wT3AyXPNB3yLSAVaW3AY+5UCLvhsClfLwByhJEDlfLwByBE?fEm58UB+gQpFewhBewhFeQpBeQpFewhBewhFeQpKeAAPABJ?YHDBQGfRA1dc9BBYHDBwUqRA1d8vBzno2AFbOLCFmk9AL+5?UCLvhsClfLwByhJEDlfLwByBEfEm58UB
+https://fumen.zui.jp/?D115@/gCti0Dei0CtDeCti0Dei0CtLeAgW0AlfLwByhjRA1?wT3AyXPNB3yLSAVaW3AY+5UCLvhsClfLwByhJEDlfLwByBE?fEm58UB+gAtFeg0Beg0FeAtBeAtFeg0Beg0FeAtKeAAPABJ?YHDBQGfRA1dc9BBYHDBwUqRA1d8vBzno2AFbOLCFmk9AL+5?UCLvhsClfLwByhJEDlfLwByBEfEm58UB
 
 #### 疑問メモ
 4色・16色パリティで閾値制約ってあるの？
 
 ### 分断された2地形の合算
 地形が二つに分断されてる場合、地形①の偏り+地形②の偏りの2つで合算してから、閾値制約を判定すれば良い。横長市松パリティのように偏りの取り方が複数ある場合は、それぞれでもっとも偏りの大きくなる取り方を合算して良い
+
+例： https://fumen.zui.jp/?D115@9gC8GeC8CeG8CeG8CeD8JeAgWeAlvs2A1sDfET4p9B?lPZOBToDfEVZi9Alvs2AZbAAA9ggWAPgWGegWAPgWCekWAP?gWCeDPgWAPgWCejWJeAAPnBlvs2A1sDfETY9KBlPxRB1yDf?EVb0KBlvs2A1pDfET4BLBlvs2AwpDfEVY9AClvs2A4xlRA1?d0KB4XHDBwPsRA1d0KB2XHDBQ+gRA1d0KB0XHDBQ+ESA1dE?EB4XHDBQENBA
