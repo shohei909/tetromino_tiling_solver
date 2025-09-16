@@ -44,7 +44,7 @@ export function stringifyIdentifier(minos:Map<MinoKind, number>, grid:boolean[][
         {
             byte = (byte << 1) | (grid[r][c] ? 1 : 0);
             bitIndex += 1;
-            if (bitIndex > 8)
+            if (bitIndex >= 8)
             {
                 dataView.setUint8(offset++, byte);
                 byte = 0;
@@ -75,6 +75,20 @@ export function stringifyPackingSolution(solution: PackingSolution):PackingSolut
     return encode(buffer) as PackingSolutionKey;
 }
 
-function encode(buffer: ArrayBuffer): string {
+export function encode(buffer: ArrayBuffer): string {
     return btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+
+export function decode(hash:string): ArrayBuffer {
+    hash = hash.replace(/-/g, '+').replace(/_/g, '/');
+    while (hash.length % 4) hash += '=';
+    const binary = atob(hash);
+    const len = binary.length;
+    const buffer = new ArrayBuffer(len);
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return buffer;
 }

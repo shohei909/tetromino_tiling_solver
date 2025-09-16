@@ -6,6 +6,8 @@ import '../scss/style.scss'
 // @ts-ignore
 import * as bootstrap from 'bootstrap'
 import { abortPacking, launchPacking } from './solver/solver_root';
+import { decode, encode } from './tool/identifier';
+import { tetroMinoKinds } from './constants';
 
 let grid: boolean[][] = [];
 const maxCanvasWidth = 900;
@@ -16,25 +18,28 @@ let isDrawing = false;
 let drawValue: boolean | null = null;
 
 function createGrid() {
-	let initial = [
-		"1111000000",
-		"1111001001",
-		"1110001111",
-		"1110111111",
-		"1110011111",
-		"1110111111",
-		"1111011111",
-	];
-	const rows = initial.length;
-	const cols = initial[0].length;
-	(document.getElementById('cols') as HTMLInputElement).value = cols.toString();
-	(document.getElementById('rows') as HTMLInputElement).value = rows.toString();
-	grid = Array.from({ length: rows }, (_, r) => {
-		return Array.from({ length: cols }, (_, c) => {
-			return initial[r][c] === '1';
+	if (grid.length == 0)
+	{
+		let initial = [
+			"1111000000",
+			"1111001001",
+			"1110001111",
+			"1110111111",
+			"1110011111",
+			"1110111111",
+			"1111011111",
+		];
+		const rows = initial.length;
+		const cols = initial[0].length;
+		(document.getElementById('cols') as HTMLInputElement).value = cols.toString();
+		(document.getElementById('rows') as HTMLInputElement).value = rows.toString();
+		grid = Array.from({ length: rows }, (_, r) => {
+			return Array.from({ length: cols }, (_, c) => {
+				return initial[r][c] === '1';
+			});
 		});
-	});
-	updateGrid();
+		updateGrid();
+	}
 	window.addEventListener('mouseup', () => {
 		isDrawing = false;
 		drawValue = null;
@@ -67,6 +72,7 @@ function updateGrid() {
 		if (y >= 0 && y < grid.length && x >= 0 && x < grid[0].length) {
 			drawValue = !grid[y][x];
 			grid[y][x] = drawValue;
+			saveGridToHash();
 			drawGrid(canvas, grid);
 		}
 	});
@@ -78,6 +84,7 @@ function updateGrid() {
 		if (y >= 0 && y < grid.length && x >= 0 && x < grid[0].length) {
 			if (grid[y][x] !== drawValue) {
 				grid[y][x] = drawValue;
+				saveGridToHash();
 				drawGrid(canvas, grid);
 			}
 		}
@@ -123,13 +130,115 @@ function resizeGrid()
 		}
 	}
 	updateGrid();
+    saveGridToHash();
+	
 	const gridDiv = document.getElementById('grid');
 	if (gridDiv && gridDiv.firstChild instanceof HTMLCanvasElement) {
 		drawGrid(gridDiv.firstChild, grid);
 	}
 };
 
-window.addEventListener('DOMContentLoaded', () => {	
+// グリッドをハッシュ文字列に変換
+function gridToHash(grid: boolean[][]): string {
+	let buffer = new ArrayBuffer(2 + Math.ceil((grid.length * grid[0].length) / 2));
+	let row = grid.length;
+	let col = grid[0].length;
+	let dataView = new DataView(buffer);
+	let offset = 0;
+	dataView.setUint8(offset++, row);
+	dataView.setUint8(offset++, col);
+    let byte = 0;
+    let bitIndex = 0;
+    for (let r = 0; r < grid.length; r++)
+    {
+        for (let c = 0; c < grid[r].length; c++)
+        {
+            byte = (byte << 4) | (grid[r][c] ? 1 : 0);
+            bitIndex += 4;
+            if (bitIndex >= 8)
+            {
+                dataView.setUint8(offset++, byte);
+                byte = 0;
+                bitIndex = 0;
+            }
+        }
+    }
+    if (bitIndex > 0) {
+        dataView.setUint8(offset++, byte);
+    }
+    return encode(buffer);
+}
+
+// ハッシュ文字列からグリッドを復元
+function hashToGrid(hash: string): {
+	grid:boolean[][],
+	plus: Map<MinoKind, number>,
+	minus: Map<MinoKind, number>
+} | null
+{
+	let buffer = decode(hash);
+	let dataView = new DataView(buffer);
+	let offset = 0;
+    const rows = dataView.getUint8(offset++);
+    const cols = dataView.getUint8(offset++);
+    const grid: boolean[][] = [];
+	let count = 4;
+    for (let r = 0; r < rows; r++) {
+        grid[r] = [];
+        for (let c = 0; c < cols; c++) {
+            grid[r][c] = ((dataView.getUint8(offset) >> count) & 1) !== 0;
+			count -= 4;
+			if (count < 0) 
+			{
+				offset++;
+				count = 4;
+			}
+        }
+    }
+    return {
+        grid,
+        plus: new Map(),
+        minus: new Map()
+    };
+}
+
+// URLハッシュからグリッドを復元
+function loadGridFromHash() {
+    if (location.hash.length > 1) {
+        const hash = decodeURIComponent(location.hash.slice(1));
+		try {
+			const loaded = hashToGrid(hash);
+			if (loaded) {
+				grid = loaded.grid;
+				(document.getElementById('rows') as HTMLInputElement).value = grid.length.toString();
+				(document.getElementById('cols') as HTMLInputElement).value = grid[0].length.toString();
+				for (const id of tetroMinoKinds) {
+					(document.getElementById('plus-' + id) as HTMLInputElement).value = (loaded.plus.get(id) || 0).toString();
+					(document.getElementById('minus-' + id) as HTMLInputElement).value = (loaded.minus.get(id) || 0).toString();
+				}
+				updateGrid();
+			}
+		} catch (e) {
+			console.error('Failed to load grid from hash:', e);
+		}
+    }
+}
+
+// グリッド変更時にURLハッシュを更新
+function saveGridToHash() {
+    const hash = gridToHash(grid);
+    location.hash = encodeURIComponent(hash);
+}
+
+function getPlusMinus(): {id: MinoKind, plus: number, minus: number}[] {
+	return tetroMinoKinds.map(id => ({
+		id: id,
+		plus : Number((document.getElementById('plus-' + id) as HTMLInputElement)?.value || 0),
+		minus: Number((document.getElementById('minus-' + id) as HTMLInputElement)?.value || 0)
+	}));
+}
+window.addEventListener('DOMContentLoaded', () => {
+    loadGridFromHash();
 	createGrid();
 	const rows = document.getElementById('rows');
 	if (rows) rows.onchange = resizeGrid;
@@ -139,13 +248,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	// grid-solve ボタンの処理
 	const solveBtn = document.getElementById('grid-solve');
 	if (solveBtn) solveBtn.onclick = async () => {
-		const minoIds = ['I','O','T','S','Z','J','L'];
-		const minos = minoIds.map(id => ({
-			id: id as MinoKind,
-			plus : Number((document.getElementById('plus-' + id) as HTMLInputElement)?.value || 0),
-			minus: Number((document.getElementById('minus-' + id) as HTMLInputElement)?.value || 0)
-		}));
-		await launchPacking(grid, minos);
+		await launchPacking(grid, getPlusMinus());
 	};
 	const abortBtn = document.getElementById('abort-button');
 	if (abortBtn) abortBtn.onclick = () => { abortPacking(); };
@@ -161,6 +264,7 @@ window.addEventListener('DOMContentLoaded', () => {
 		if (gridDiv && gridDiv.firstChild instanceof HTMLCanvasElement) {
 			drawGrid(gridDiv.firstChild, grid);
 		}
+		saveGridToHash();
 	};
 	const fillGrayBtn = document.getElementById('fill-gray');
 	if (fillGrayBtn) fillGrayBtn.onclick = () => {
@@ -173,6 +277,7 @@ window.addEventListener('DOMContentLoaded', () => {
 		if (gridDiv && gridDiv.firstChild instanceof HTMLCanvasElement) {
 			drawGrid(gridDiv.firstChild, grid);
 		}
+		saveGridToHash();
 	};
 	const minoIds = ['I','O','T','S','Z','J','L'];
 	// 下限数ボタン
@@ -181,6 +286,7 @@ window.addEventListener('DOMContentLoaded', () => {
 		for (const id of minoIds) {
 			const input = document.getElementById('minus-' + id) as HTMLInputElement;
 			if (input) input.value = '0';
+			saveGridToHash();
 		}
 	};
 	const plusZeroBtn = document.getElementById('plus-zero');
@@ -188,6 +294,11 @@ window.addEventListener('DOMContentLoaded', () => {
 		for (const id of minoIds) {
 			const input = document.getElementById('plus-' + id) as HTMLInputElement;
 			if (input) input.value = '0';
+			saveGridToHash();
 		}
 	};
+
+	for (const numberInput of document.querySelectorAll('input[name="number-input"]')) {
+		(numberInput as HTMLInputElement).onchange = saveGridToHash;
+	}
 });
