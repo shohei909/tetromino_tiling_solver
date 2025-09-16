@@ -21,7 +21,7 @@
     <div id="problem">
       <div class="row g-4">
         <div class="col-auto">
-          <h2 class="h5 mb-3 text-secondary">条件設定</h2>
+          <h2 class="h5 mb-3 text-secondary">フィールド設定</h2>
           <div class="row g-3 align-items-center mb-3">
             <div class="col-auto">
               <label for="rows" class="col-form-label">縦:</label>
@@ -37,9 +37,19 @@
             </div>
           </div>
           <div id="grid" class="mb-4"></div>
-          <div class="mb-3 d-flex gap-2">
-            <button id="fill-white" class="btn btn-light border">すべて白マス(配置なし)に</button>
-            <button id="fill-gray" class="btn btn-light border" style="background-color: rgb(207, 207, 207);">すべて灰色マス(配置対象)に</button>
+          <div class="mb-3 d-flex gap-2 align-items-center">
+            <button id="fill-white" class="btn btn-light border">すべて白マス<br/>(配置なし)に</button>
+            <button id="fill-gray" class="btn btn-light border" style="background-color: rgb(207, 207, 207);">すべて灰色マス<br/>(配置対象)に</button>
+            <div class="mb-3 d-flex gap-2 justify-content-center">
+              <div class="mb-3 d-flex flex-column align-items-center">
+                <button id="move-up" class="btn btn-outline-secondary btn-sm mb-1">▲</button>
+                <div class="d-flex flex-row justify-content-center" style="width:100%;">
+                  <button id="move-left" class="btn btn-outline-secondary btn-sm me-1">◀</button>
+                  <button id="move-down" class="btn btn-outline-secondary btn-sm mt-1">▼</button>
+                  <button id="move-right" class="btn btn-outline-secondary btn-sm ms-1">▶</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="col-auto">

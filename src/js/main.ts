@@ -4,7 +4,6 @@ import '../scss/style.scss'
 
 // Import all of Bootstrap's JS
 // @ts-ignore
-import * as bootstrap from 'bootstrap'
 import { abortPacking, launchPacking } from './solver/solver_root';
 import { decode, encode } from './tool/identifier';
 import { tetroMinoKinds } from './constants';
@@ -21,15 +20,11 @@ function createGrid() {
 	if (grid.length == 0)
 	{
 		let initial = [
-			"1111000000",
-			"1111001001",
-			"1110001111",
-			"1110111111",
-			"1110011111",
+			"0110000001",
+			"1110010111",
 			"1110111111",
 			"1111011111",
 		];
-		(document.getElementById('minus-T') as HTMLInputElement).value = "1";
 		const rows = initial.length;
 		const cols = initial[0].length;
 		(document.getElementById('cols') as HTMLInputElement).value = cols.toString();
@@ -305,8 +300,31 @@ window.addEventListener('DOMContentLoaded', () => {
 			saveGridToHash();
 		}
 	};
-
 	for (const numberInput of document.querySelectorAll('input[name="number-input"]')) {
 		(numberInput as HTMLInputElement).onchange = saveGridToHash;
 	}
+
+	document.getElementById('move-up')?.addEventListener('click', () => moveGrid(0, -1));
+    document.getElementById('move-down')?.addEventListener('click', () => moveGrid(0, 1));
+    document.getElementById('move-left')?.addEventListener('click', () => moveGrid(-1, 0));
+    document.getElementById('move-right')?.addEventListener('click', () => moveGrid(1, 0));
 });
+
+// --- グリッド移動機能 ---
+function moveGrid(dx: number, dy: number) {
+    const rows = grid.length;
+    const cols = grid[0]?.length || 0;
+    const newGrid: boolean[][] = Array.from({ length: rows }, () => Array(cols).fill(false));
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const nr = r - dy;
+            const nc = c - dx;
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                newGrid[r][c] = grid[nr][nc];
+            }
+        }
+    }
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) grid[r][c] = newGrid[r][c];
+    updateGrid();
+    saveGridToHash();
+}
