@@ -37,6 +37,7 @@ function cutField(offsetX:number, offsetY:number, field: SubField): SubFieldNode
     // Lowlink法 で関節点を求める
     const ord: number[][] = Array.from({ length: rows }, () => Array(cols).fill(-1));
     const low: number[][] = Array.from({ length: rows }, () => Array(cols).fill(-1));
+    
     // 関節点
     const articulation: {x:number, y:number}[] = [];
     let timer = 0;

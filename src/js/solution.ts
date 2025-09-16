@@ -5,6 +5,7 @@ interface PackingProblemData
 {
     problem: PackingProblem,
     solutions: Set<PackingSolutionKey>,
+    mainSolutions: Set<MainSolutionKey>, // この部分問題を使用している全体の解
 }
 interface SubSolutionData
 {
@@ -23,7 +24,7 @@ interface SubSolutionGroup
 interface MainSolutionData
 {
     packings: PackingProblemReference[], // この解を構成する部分問題のキー文字列の配列
-    firstMergedSolution: PackingSolution, // この部分問題の組み合わせの中で最初に見つかった解
+    minoKinds: MinoKind[], // この解で使用しているミノの種類
 }
 type PackingProblemReference = {
     offset:{ x: number, y: number }, 
@@ -49,7 +50,7 @@ export function addSolution(wholeSize:{rows:number, cols:number}, problem: SubPr
 {
     let isLast = problem.rest.subFields.length == 0;
     let isDivided = !isLast || problem.stateKey != "";
-    let packingProblemKey = addPackingProblem(problem.problem, solution, isDivided);
+    let packingProblemKey = addPackingProblem(wholeSize,problem.problem, solution, isDivided);
     let stateKey = addSubSolution(problem, solution, packingProblemKey);
     if (isLast)
     {
@@ -84,34 +85,23 @@ export function addMainSolution(
     for (const packings of getPackingsList(problem.stateKey, problem.problem.field.offset, packingProblemKey))
     {
         let key = packings.map(packing => `${packing.packingProblemKey}`).join('_') as MainSolutionKey; // 連結した文字列をキーにする
-        let mergedSolution:PackingSolution = {
-            minoKinds: [],
-            solution: Array(wholeSize.cols).fill(0).map(() => Array(wholeSize.rows).fill(-1))
-        }
+        let minoKinds:MinoKind[] = [];
         for (const packing of packings)
         {
-            let firstPacking = packingProblems.get(packing.packingProblemKey)?.solutions?.values()?.next()?.value;
+            let packingProblem = packingProblems.get(packing.packingProblemKey)!;
+            packingProblem.mainSolutions.add(key);
+            let firstPacking = packingProblem?.solutions?.values()?.next()?.value;
             if (!firstPacking) continue;
             let solution = packingSolutions.get(firstPacking);
             if (!solution) continue;
-            let num = mergedSolution.minoKinds.length;
             for (const minoKind of solution.minoKinds) {
-                mergedSolution.minoKinds.push(minoKind);
-            }
-            for (let r = 0; r < solution.solution.length; r++) {
-                for (let c = 0; c < solution.solution[r].length; c++) {
-                    if (solution.solution[r][c] != -1) {
-                        mergedSolution.solution[r + packing.offset.y][c + packing.offset.x] = solution.solution[r][c] + num;
-                    }
-                }
+                minoKinds.push(minoKind);
             }
         }
-        if (!mainSolutions.has(key))
+        let exists = mainSolutions.has(key);
+        if (!exists)
         {
-            mainSolutions.set(key, {
-                packings: packings,
-                firstMergedSolution: mergedSolution,
-            });
+            mainSolutions.set(key, { packings, minoKinds });
             let mainDiv = document.getElementById('solve-main-result');
             if (mainDiv == null) {
                 let resultDiv  = document.getElementById('solve-result')!;
@@ -120,20 +110,20 @@ export function addMainSolution(
                 mainDiv.innerHTML = `<h2>結果</h2>`;
                 resultDiv.prepend(mainDiv);
             }
-            let minoGroupKey = stringifyMinoKinds(mergedSolution.minoKinds);
+            let minoGroupKey = stringifyMinoKinds(minoKinds);
             let minoGroupDiv = document.getElementById('solve-mino-' + minoGroupKey);
             if (minoGroupDiv == null) 
             {
                 minoGroupDiv = document.createElement('div');
                 minoGroupDiv.id = 'solve-mino-' + minoGroupKey;
                 let images = '';
-                for (const minoKind of mergedSolution.minoKinds) {
+                for (const minoKind of minoKinds) {
                     images += `<img src="img/${minoKind}.png" alt="${minoKind}" class="mino-icon">`;
                 }
                 minoGroupDiv.innerHTML = `<div>${images}</div><div></div>`;
                 mainDiv.appendChild(minoGroupDiv);
             }
-            let id = 'mainfield-' + key;
+            let id = 'mainfield-outer-' + key;
             let fieldElement = document.getElementById(id);
             if (fieldElement == null)
             {
@@ -141,7 +131,7 @@ export function addMainSolution(
                 fieldElement.id = id;
                 fieldElement.className = "row g-2 mb-3";
                 mainDiv.appendChild(fieldElement);
-
+                
                 if (packings.length > 1)
                 {
                     for (const packing of packings)
@@ -166,34 +156,117 @@ export function addMainSolution(
                         fieldElement.appendChild(mark);
                     }
                 }
-            }
-            
-            let cols = wholeSize.cols;
-            let rows = wholeSize.rows;
-            let cellSize = 15;
-            const canvas = document.createElement('canvas');
-            canvas.width = cols * cellSize + 1;
-            canvas.height = rows * cellSize + 1;
-            fieldElement.appendChild(canvas);
-            canvas.className = "result-canvas col-auto";
-            const ctx = canvas.getContext('2d');
-            if (!ctx) continue;
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    ctx.fillStyle = 'rgba(253, 253, 253, 1)';
-                    ctx.fillRect(c * cellSize + 0.5, r * cellSize + 0.5, cellSize, cellSize);
-                    ctx.strokeStyle = '#b7b7b7ff';
-                    ctx.strokeRect(c * cellSize + 0.5, r * cellSize + 0.5, cellSize, cellSize);
-                    
-                    const minoIndex = mergedSolution.solution[r][c];
-                    ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : mergedSolution.minoKinds[minoIndex]);
-                    ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 1, cellSize - 1);
-                }
+
+                let innerId = 'mainfield-' + key;
+                let innerElement = document.createElement('div');
+                innerElement.id = innerId;
+                innerElement.className = "row g-2 mb-3 col-auto d-flex align-items-center";
+                fieldElement.appendChild(innerElement);
             }
         }
+        refreshMainSolution(wholeSize, key);
     }
 }
 
+function refreshMainSolution(wholeSize:{cols: number, rows: number}, key: MainSolutionKey):void
+{   
+    let id = 'mainfield-' + key;
+    let fieldElement = document.getElementById(id)!;
+    fieldElement.innerHTML = '';
+    let cols = wholeSize.cols;
+    let rows = wholeSize.rows;
+    let cellSize = 15;
+
+    let mainSolution = mainSolutions.get(key)!; 
+    let packings = mainSolution.packings;
+    let solutionTable:PackingSolutionKey[][] = [];
+    for (let packing of packings)
+    {
+        let problems = packingProblems.get(packing.packingProblemKey)!;
+        solutionTable.push(Array.from(problems.solutions));
+    }
+
+    let solutions:PackingSolutionKey[] = [];
+    function addSolution()
+    {
+        let mergedSolution = Array.from({ length: rows }, () => Array(cols).fill(-1));
+        let num = 0;
+        let minoKinds = [];
+        for (const [i, solutionKey] of solutions.entries())
+        {
+            let solution = packingSolutions.get(solutionKey)!;
+            let packing = packings[i];
+            for (let r = 0; r < solution.solution.length; r++) {
+                for (let c = 0; c < solution.solution[r].length; c++) {
+                    if (solution.solution[r][c] != -1) {
+                        mergedSolution[r + packing.offset.y][c + packing.offset.x] = solution.solution[r][c] + num;
+                    }
+                }
+            }
+            num += solution.minoKinds.length;
+            minoKinds.push(...solution.minoKinds);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = cols * cellSize + 1;
+        canvas.height = rows * cellSize + 1;
+        fieldElement.appendChild(canvas);
+        canvas.className = "result-canvas col-auto";
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                ctx.fillStyle = 'rgba(253, 253, 253, 1)';
+                ctx.fillRect(c * cellSize + 0.5, r * cellSize + 0.5, cellSize, cellSize);
+                ctx.strokeStyle = '#b7b7b7ff';
+                ctx.strokeRect(c * cellSize + 0.5, r * cellSize + 0.5, cellSize, cellSize);
+                
+                const minoIndex = mergedSolution[r][c];
+                ctx.fillStyle = getMinoColor(minoIndex == -1 || isNaN(minoIndex) ? "#474747" : minoKinds[minoIndex]);
+                ctx.fillRect(c * cellSize + 1, r * cellSize + 1, cellSize - 1, cellSize - 1);
+            }
+        }
+    }
+    let stack = [-1];
+    let count = 0;
+    while (true)
+    {
+        if (stack.length == 0) break;
+        if (solutions.length == packings.length)
+        {
+            count++;
+
+            // 多すぎて表示できない場合は省略
+            if (count > 50)
+            {
+                const div = document.createElement('div');
+                div.className = "col-auto d-flex align-items-center";
+                div.textContent = "…など";
+                fieldElement.appendChild(div);
+                break;
+            }
+
+            // 解を追加した後、戻る
+            addSolution();
+            stack.pop();
+            solutions.pop();
+            continue;
+        }
+        
+        let depth = stack.length - 1;
+        let index = stack[depth] += 1;
+        if (index < solutionTable[depth].length)
+        {
+            solutions.push(solutionTable[depth][index]);
+            stack.push(-1);
+        }
+        else
+        {
+            solutions.pop();
+            stack.pop();
+        }
+    }
+}
 export function addSubSolution(problem: SubProblemContext, solution: PackingSolution, packingProblemKey:PackingProblemKey):StateKey
 {
     let prevStateKey    = problem.stateKey;
@@ -221,7 +294,7 @@ export function addSubSolution(problem: SubProblemContext, solution: PackingSolu
     return stateKey;
 }
 
-function addPackingProblem(problem: PackingProblem, solution: PackingSolution, isDivided:boolean):PackingProblemKey
+function addPackingProblem(wholeSize:{rows:number, cols:number}, problem: PackingProblem, solution: PackingSolution, isDivided:boolean):PackingProblemKey
 {
     let fieldKey = stringifyField(problem.field.grid);
     let packingSolutionKey = stringifyPackingSolution(solution);
@@ -233,10 +306,12 @@ function addPackingProblem(problem: PackingProblem, solution: PackingSolution, i
         packingProblems.set(packingProblemKey, {
             problem,
             solutions: new Set<PackingSolutionKey>(),
+            mainSolutions: new Set<MainSolutionKey>(),
         });
     }
     let solutionKey = stringifyPackingSolution(solution);
-    let solutions = packingProblems.get(packingProblemKey)!.solutions;
+    let packingProblem = packingProblems.get(packingProblemKey)!;
+    let solutions = packingProblem.solutions;
     if (solutions.has(solutionKey))
     {
         // すでに登録済み
@@ -271,6 +346,10 @@ function addPackingProblem(problem: PackingProblem, solution: PackingSolution, i
         }
         for (let div of document.getElementsByClassName(className)) {
             appendPackingSolutionCanvas(div, solution);
+        }
+        for (let mainSolutionKey of packingProblem.mainSolutions)
+        {
+            refreshMainSolution(wholeSize, mainSolutionKey);
         }
     }
     return packingProblemKey;
