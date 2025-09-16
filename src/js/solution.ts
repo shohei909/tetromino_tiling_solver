@@ -55,14 +55,15 @@ export function addSolution(wholeSize:{rows:number, cols:number}, problem: SubPr
     let stateKey = addSubSolution(problem, solution, packingProblemKey);
     if (isLast)
     {
-        addMainSolution(wholeSize, problem, packingProblemKey);
+        addMainSolution(wholeSize, problem, packingProblemKey, isDivided);
     }
     return stateKey;
 }
 export function addMainSolution(
     wholeSize:{rows:number, cols:number}, 
     problem: SubProblemContext, 
-    packingProblemKey: PackingProblemKey
+    packingProblemKey: PackingProblemKey,
+    isDivided:boolean = true
 ):void
 {
     console.log(`Found a solution! stateKey=${problem.stateKey}, offset=(${problem.problem.field.offset.x},${problem.problem.field.offset.y}), packingProblemKey=${packingProblemKey}`);
@@ -165,12 +166,15 @@ export function addMainSolution(
                 fieldElement.appendChild(innerElement);
             }
         }
-        refreshMainSolution(wholeSize, key);
+        refreshMainSolution(wholeSize, key, isDivided);
     }
 }
 
-function refreshMainSolution(wholeSize:{cols: number, rows: number}, key: MainSolutionKey):void
+function refreshMainSolution(wholeSize:{cols: number, rows: number}, key: MainSolutionKey, isDivided:boolean):void
 {   
+    let mainSolution = mainSolutions.get(key)!; 
+    if (mainSolution.locked) { return; } // すでに多すぎて省略されている場合は処理しない
+    
     let id = 'mainfield-' + key;
     let fieldElement = document.getElementById(id)!;
     fieldElement.innerHTML = '';
@@ -178,8 +182,6 @@ function refreshMainSolution(wholeSize:{cols: number, rows: number}, key: MainSo
     let rows = wholeSize.rows;
     let cellSize = 15;
 
-    let mainSolution = mainSolutions.get(key)!; 
-    if (mainSolution.locked) { return; } // すでに多すぎて省略されている場合は処理しない
     let packings = mainSolution.packings;
     let solutionTable:PackingSolutionKey[][] = [];
     for (let packing of packings)
@@ -239,7 +241,10 @@ function refreshMainSolution(wholeSize:{cols: number, rows: number}, key: MainSo
             count++;
 
             // 多すぎて表示できない場合は省略
-            if (count > 100)
+            if (
+                (isDivided && count > 100) ||
+                (!isDivided && count > 1000)
+            )
             {
                 const div = document.createElement('div');
                 div.className = "col-auto d-flex align-items-center";
@@ -352,7 +357,7 @@ function addPackingProblem(wholeSize:{rows:number, cols:number}, problem: Packin
         }
         for (let mainSolutionKey of packingProblem.mainSolutions)
         {
-            refreshMainSolution(wholeSize, mainSolutionKey);
+            refreshMainSolution(wholeSize, mainSolutionKey, isDivided);
         }
     }
     return packingProblemKey;
