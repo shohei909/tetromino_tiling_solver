@@ -3,7 +3,7 @@
 テトリスの地形を与えると、その地形がどんな置き方によって作れるかを逆算してくれるツールです。
 つまり、テトリス用に特化したポリオミノ敷き詰め問題解答ツールです。
 
-https://shohei909.github.io/tetromino_packing_solver/
+https://shohei909.github.io/tetromino_tiling_solver/
 
 から利用できます。
 

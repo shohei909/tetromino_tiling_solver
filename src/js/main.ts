@@ -17,8 +17,7 @@ let isDrawing = false;
 let drawValue: boolean | null = null;
 
 function createGrid() {
-	if (grid.length == 0)
-	{
+	if (grid.length == 0) {
 		let initial = [
 			"0110000001",
 			"1110010111",
@@ -85,7 +84,7 @@ function updateGrid() {
 			}
 		}
 	});
-	
+
 	drawGrid(canvas, grid);
 }
 
@@ -102,32 +101,26 @@ function drawGrid(canvas: HTMLCanvasElement, grid: boolean[][]) {
 		}
 	}
 }
-function resizeGrid() 
-{
+function resizeGrid() {
 	const rows = parseInt((document.getElementById('rows') as HTMLInputElement).value);
 	const cols = parseInt((document.getElementById('cols') as HTMLInputElement).value);
-	while (grid.length > rows)
-	{
+	while (grid.length > rows) {
 		grid.shift();
 	}
-	while (grid.length < rows)
-	{
+	while (grid.length < rows) {
 		grid.unshift(Array(cols).fill(false));
 	}
-	if (grid.length > 0) 
-	{
-		while (grid[0].length > cols)
-		{
+	if (grid.length > 0) {
+		while (grid[0].length > cols) {
 			for (let r = 0; r < grid.length; r++) grid[r].pop();
 		}
-		while (grid[0].length < cols)
-		{
+		while (grid[0].length < cols) {
 			for (let r = 0; r < grid.length; r++) grid[r].push(grid[r][grid[r].length - 1]);
 		}
 	}
 	updateGrid();
-    saveGridToHash();
-	
+	saveGridToHash();
+
 	const gridDiv = document.getElementById('grid');
 	if (gridDiv && gridDiv.firstChild instanceof HTMLCanvasElement) {
 		drawGrid(gridDiv.firstChild, grid);
@@ -141,74 +134,68 @@ function gridToHash(grid: boolean[][]): string {
 	let col = grid[0].length;
 	let dataView = new DataView(buffer);
 	let offset = 0;
-    dataView.setUint8(offset++,   0); // version
+	dataView.setUint8(offset++, 0); // version
 	dataView.setUint8(offset++, row);
 	dataView.setUint8(offset++, col);
-    let byte = 0;
-    let bitIndex = 0;
-    for (let r = 0; r < grid.length; r++)
-    {
-        for (let c = 0; c < grid[r].length; c++)
-        {
-            byte = (byte << 4) | (grid[r][c] ? 1 : 0);
-            bitIndex += 4;
-            if (bitIndex >= 8)
-            {
-                dataView.setUint8(offset++, byte);
-                byte = 0;
-                bitIndex = 0;
-            }
-        }
-    }
-    if (bitIndex > 0) {
-        dataView.setUint8(offset++, byte);
-    }
-	for (let plusMinus of getPlusMinus())
-	{
+	let byte = 0;
+	let bitIndex = 0;
+	for (let r = 0; r < grid.length; r++) {
+		for (let c = 0; c < grid[r].length; c++) {
+			byte = (byte << 4) | (grid[r][c] ? 1 : 0);
+			bitIndex += 4;
+			if (bitIndex >= 8) {
+				dataView.setUint8(offset++, byte);
+				byte = 0;
+				bitIndex = 0;
+			}
+		}
+	}
+	if (bitIndex > 0) {
+		dataView.setUint8(offset++, byte);
+	}
+	for (let plusMinus of getPlusMinus()) {
 		dataView.setUint8(offset++, plusMinus.plus);
 		dataView.setUint8(offset++, plusMinus.minus);
 	}
-    return encode(buffer);
+	return encode(buffer);
 }
 
 // ハッシュ文字列からグリッドを復元
 function hashToGrid(hash: string): {
-	grid:boolean[][],
+	grid: boolean[][],
 	plus: Map<MinoKind, number>,
 	minus: Map<MinoKind, number>
-} | null
-{
+} | null {
 	let buffer = decode(hash);
 	let dataView = new DataView(buffer);
 	let offset = 0;
-    offset++; // version
-    const rows = dataView.getUint8(offset++);
-    const cols = dataView.getUint8(offset++);
-    const grid: boolean[][] = [];
+	offset++; // version
+	const rows = dataView.getUint8(offset++);
+	const cols = dataView.getUint8(offset++);
+	const grid: boolean[][] = [];
 	let count = 4;
-    for (let r = 0; r < rows; r++) {
-        grid[r] = [];
-        for (let c = 0; c < cols; c++) {
-            grid[r][c] = ((dataView.getUint8(offset) >> count) & 1) !== 0;
+	for (let r = 0; r < rows; r++) {
+		grid[r] = [];
+		for (let c = 0; c < cols; c++) {
+			grid[r][c] = ((dataView.getUint8(offset) >> count) & 1) !== 0;
 			count -= 4;
-			if (count < 0) 
-			{
+			if (count < 0) {
 				offset++;
 				count = 4;
 			}
-        }
-    }
-    return {
-        grid,
-        plus: new Map(),
-        minus: new Map()
-    };
+		}
+	}
+	return {
+		grid,
+		plus: new Map(),
+		minus: new Map()
+	};
 }
 
 // URLハッシュからグリッドを復元
 function loadGridFromHash() {
-    if (location.hash.length > 1) {
-        const hash = decodeURIComponent(location.hash.slice(1));
+	if (location.hash.length > 1) {
+		const hash = decodeURIComponent(location.hash.slice(1));
 		try {
 			const loaded = hashToGrid(hash);
 			if (loaded) {
@@ -224,24 +211,24 @@ function loadGridFromHash() {
 		} catch (e) {
 			console.error('Failed to load grid from hash:', e);
 		}
-    }
+	}
 }
 
 // グリッド変更時にURLハッシュを更新
 function saveGridToHash() {
-    const hash = gridToHash(grid);
-    location.hash = encodeURIComponent(hash);
+	const hash = gridToHash(grid);
+	location.hash = encodeURIComponent(hash);
 }
 
-function getPlusMinus(): {id: MinoKind, plus: number, minus: number}[] {
+function getPlusMinus(): { id: MinoKind, plus: number, minus: number }[] {
 	return tetroMinoKinds.map(id => ({
 		id: id,
-		plus : Number((document.getElementById('plus-' + id) as HTMLInputElement)?.value || 0),
+		plus: Number((document.getElementById('plus-' + id) as HTMLInputElement)?.value || 0),
 		minus: Number((document.getElementById('minus-' + id) as HTMLInputElement)?.value || 0)
 	}));
 }
 window.addEventListener('DOMContentLoaded', () => {
-    loadGridFromHash();
+	loadGridFromHash();
 	createGrid();
 	const rows = document.getElementById('rows');
 	if (rows) rows.onchange = resizeGrid;
@@ -282,7 +269,7 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 		saveGridToHash();
 	};
-	const minoIds = ['I','O','T','S','Z','J','L'];
+	const minoIds = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
 	// 下限数ボタン
 	const minusZeroBtn = document.getElementById('minus-zero');
 	if (minusZeroBtn) minusZeroBtn.onclick = () => {
@@ -305,26 +292,36 @@ window.addEventListener('DOMContentLoaded', () => {
 	}
 
 	document.getElementById('move-up')?.addEventListener('click', () => moveGrid(0, -1));
-    document.getElementById('move-down')?.addEventListener('click', () => moveGrid(0, 1));
-    document.getElementById('move-left')?.addEventListener('click', () => moveGrid(-1, 0));
-    document.getElementById('move-right')?.addEventListener('click', () => moveGrid(1, 0));
+	document.getElementById('move-down')?.addEventListener('click', () => moveGrid(0, 1));
+	document.getElementById('move-left')?.addEventListener('click', () => moveGrid(-1, 0));
+	document.getElementById('move-right')?.addEventListener('click', () => moveGrid(1, 0));
+
+	const copyBtn = document.getElementById('copy-link');
+	if (copyBtn) {
+		copyBtn.addEventListener('click', function () {
+			navigator.clipboard.writeText(window.location.href).then(function () {
+				copyBtn.textContent = 'コピーしました!';
+				setTimeout(() => { copyBtn.textContent = 'リンクをコピー'; }, 1500);
+			});
+		});
+	}
 });
 
 // --- グリッド移動機能 ---
 function moveGrid(dx: number, dy: number) {
-    const rows = grid.length;
-    const cols = grid[0]?.length || 0;
-    const newGrid: boolean[][] = Array.from({ length: rows }, () => Array(cols).fill(false));
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            const nr = r - dy;
-            const nc = c - dx;
-            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
-                newGrid[r][c] = grid[nr][nc];
-            }
-        }
-    }
-    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) grid[r][c] = newGrid[r][c];
-    updateGrid();
-    saveGridToHash();
+	const rows = grid.length;
+	const cols = grid[0]?.length || 0;
+	const newGrid: boolean[][] = Array.from({ length: rows }, () => Array(cols).fill(false));
+	for (let r = 0; r < rows; r++) {
+		for (let c = 0; c < cols; c++) {
+			const nr = r - dy;
+			const nc = c - dx;
+			if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+				newGrid[r][c] = grid[nr][nc];
+			}
+		}
+	}
+	for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) grid[r][c] = newGrid[r][c];
+	updateGrid();
+	saveGridToHash();
 }
