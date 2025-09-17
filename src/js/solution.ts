@@ -111,7 +111,7 @@ export function addMainSolution(
                 let resultDiv  = document.getElementById('solve-result')!;
                 mainDiv = document.createElement('div');
                 mainDiv.id = 'solve-main-result';
-                mainDiv.innerHTML = `<h2>結果</h2>`;
+                mainDiv.innerHTML = `<h2 class="h3">結果</h2>`;
                 resultDiv.prepend(mainDiv);
             }
 
@@ -350,7 +350,7 @@ function addPackingProblem(wholeSize:{rows:number, cols:number}, problem: Packin
             let resultDiv  = document.getElementById('solve-result')!;
             packingDiv = document.createElement('div');
             packingDiv.id = 'solve-packing-result';
-            packingDiv.innerHTML = `<h3>途中経過</h3>`;
+            packingDiv.innerHTML = `<h3 class="h4 text-secondary">途中経過</h3>`;
             resultDiv.appendChild(packingDiv);
         }
         let id = 'subfield-' + fieldKey;
