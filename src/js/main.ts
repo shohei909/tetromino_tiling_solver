@@ -10,7 +10,7 @@ import { tetroMinoKinds } from './constants';
 
 let grid: boolean[][] = [];
 const maxCanvasWidth = 900;
-const maxCellSize = 60;
+const maxCellSize = 75;
 let cellSize = 30;
 
 let isDrawing = false;
@@ -19,8 +19,6 @@ let drawValue: boolean | null = null;
 function createGrid() {
 	if (grid.length == 0) {
 		let initial = [
-			"0000000000",
-			"0000000000",
 			"0000000000",
 			"1111000000",
 			"1111001001",
