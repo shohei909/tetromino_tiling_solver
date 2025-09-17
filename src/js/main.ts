@@ -90,6 +90,40 @@ function updateGrid() {
 			}
 		}
 	});
+	// タッチ操作に対応
+	canvas.addEventListener('touchstart', (e) => {
+		e.preventDefault();
+		const rect = canvas.getBoundingClientRect();
+		const touch = e.touches[0];
+		const x = Math.floor((touch.clientX - rect.left) / cellSize);
+		const y = Math.floor((touch.clientY - rect.top) / cellSize);
+		isDrawing = true;
+		drawValue = (y >= 0 && y < grid.length && x >= 0 && x < grid[0].length) ? !grid[y][x] : null;
+		if (drawValue !== null) {
+			grid[y][x] = drawValue;
+			saveGridToHash();
+			drawGrid(canvas, grid);
+		}
+	}, { passive: false });
+	canvas.addEventListener('touchmove', (e) => {
+		e.preventDefault();
+		if (!isDrawing || drawValue === null) return;
+		const rect = canvas.getBoundingClientRect();
+		const touch = e.touches[0];
+		const x = Math.floor((touch.clientX - rect.left) / cellSize);
+		const y = Math.floor((touch.clientY - rect.top) / cellSize);
+		if (y >= 0 && y < grid.length && x >= 0 && x < grid[0].length) {
+			if (grid[y][x] !== drawValue) {
+				grid[y][x] = drawValue;
+				saveGridToHash();
+				drawGrid(canvas, grid);
+			}
+		}
+	}, { passive: false });
+	canvas.addEventListener('touchend', () => {
+		isDrawing = false;
+		drawValue = null;
+	});
 
 	drawGrid(canvas, grid);
 }
