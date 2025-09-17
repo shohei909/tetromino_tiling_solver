@@ -353,8 +353,10 @@ function moveGrid(dx: number, dy: number) {
 	for (let r = 0; r < rows; r++) {
 		for (let c = 0; c < cols; c++) {
 			const nr = r - dy;
-			const nc = c - dx;
-			if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+			// 横方向はトーラス状（あふれた分は反対側へ）
+			let nc = (c - dx) % cols;
+			if (nc < 0) nc += cols;
+			if (nr >= 0 && nr < rows) {
 				newGrid[r][c] = grid[nr][nc];
 			}
 		}
