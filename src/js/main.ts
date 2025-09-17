@@ -230,6 +230,9 @@ function hashToGrid(hash: string): {
 	};
 }
 
+window.addEventListener('hashchange', () => {
+	loadGridFromHash();
+});
 // URLハッシュからグリッドを復元
 function loadGridFromHash() {
 	if (location.hash.length > 1) {
