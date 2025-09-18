@@ -5,7 +5,7 @@
       "name": "Vite + Chrome Debug",
       "type": "chrome",
       "request": "launch",
-      "url": "http://localhost:8080",
+      "url": "http://localhost:8080/presets.html",
       "webRoot": "${workspaceFolder}/src",
       "preLaunchTask": "run: all"
     }

@@ -7,6 +7,7 @@ import '../scss/style.scss'
 import { abortPacking, launchPacking } from './solver/solver_root';
 import { decode, encode } from './tool/identifier';
 import { tetroMinoKinds } from './constants';
+import { gridToHash, hashToGrid } from './tool/hash';
 
 let grid: boolean[][] = [];
 const maxCanvasWidth = 900;
@@ -165,71 +166,6 @@ function resizeGrid() {
 	}
 };
 
-// グリッドをハッシュ文字列に変換
-function gridToHash(grid: boolean[][]): string {
-	let buffer = new ArrayBuffer(20 + Math.ceil((grid.length * grid[0].length) / 2));
-	let row = grid.length;
-	let col = grid[0].length;
-	let dataView = new DataView(buffer);
-	let offset = 0;
-	dataView.setUint8(offset++, 0); // version
-	dataView.setUint8(offset++, row);
-	dataView.setUint8(offset++, col);
-	let byte = 0;
-	let bitIndex = 0;
-	for (let r = 0; r < grid.length; r++) {
-		for (let c = 0; c < grid[r].length; c++) {
-			byte = (byte << 4) | (grid[r][c] ? 1 : 0);
-			bitIndex += 4;
-			if (bitIndex >= 8) {
-				dataView.setUint8(offset++, byte);
-				byte = 0;
-				bitIndex = 0;
-			}
-		}
-	}
-	if (bitIndex > 0) {
-		dataView.setUint8(offset++, byte);
-	}
-	for (let plusMinus of getPlusMinus()) {
-		dataView.setUint8(offset++, plusMinus.plus);
-		dataView.setUint8(offset++, plusMinus.minus);
-	}
-	return encode(buffer);
-}
-
-// ハッシュ文字列からグリッドを復元
-function hashToGrid(hash: string): {
-	grid: boolean[][],
-	plus: Map<MinoKind, number>,
-	minus: Map<MinoKind, number>
-} | null {
-	let buffer = decode(hash);
-	let dataView = new DataView(buffer);
-	let offset = 0;
-	offset++; // version
-	const rows = dataView.getUint8(offset++);
-	const cols = dataView.getUint8(offset++);
-	const grid: boolean[][] = [];
-	let count = 4;
-	for (let r = 0; r < rows; r++) {
-		grid[r] = [];
-		for (let c = 0; c < cols; c++) {
-			grid[r][c] = ((dataView.getUint8(offset) >> count) & 1) !== 0;
-			count -= 4;
-			if (count < 0) {
-				offset++;
-				count = 4;
-			}
-		}
-	}
-	return {
-		grid,
-		plus: new Map(),
-		minus: new Map()
-	};
-}
-
 window.addEventListener('hashchange', () => {
 	loadGridFromHash();
 });
@@ -243,9 +179,10 @@ function loadGridFromHash() {
 				grid = loaded.grid;
 				(document.getElementById('rows') as HTMLInputElement).value = grid.length.toString();
 				(document.getElementById('cols') as HTMLInputElement).value = grid[0].length.toString();
+				let plusMinus = loaded.plusMinus;
 				for (const id of tetroMinoKinds) {
-					(document.getElementById('plus-' + id) as HTMLInputElement).value = (loaded.plus.get(id) || 0).toString();
-					(document.getElementById('minus-' + id) as HTMLInputElement).value = (loaded.minus.get(id) || 0).toString();
+					(document.getElementById('plus-' + id) as HTMLInputElement).value = (plusMinus.get(id)?.plus || 0).toString();
+					(document.getElementById('minus-' + id) as HTMLInputElement).value = (plusMinus.get(id)?.minus || 0).toString();
 				}
 				updateGrid();
 			}
@@ -257,16 +194,18 @@ function loadGridFromHash() {
 
 // グリッド変更時にURLハッシュを更新
 function saveGridToHash() {
-	const hash = gridToHash(grid);
+	const hash = gridToHash(grid, getPlusMinus());
 	location.hash = encodeURIComponent(hash);
 }
 
-function getPlusMinus(): { id: MinoKind, plus: number, minus: number }[] {
-	return tetroMinoKinds.map(id => ({
-		id: id,
-		plus: Number((document.getElementById('plus-' + id) as HTMLInputElement)?.value || 0),
-		minus: Number((document.getElementById('minus-' + id) as HTMLInputElement)?.value || 0)
-	}));
+function getPlusMinus(): Map<MinoKind, { plus: number, minus: number }> {
+	return tetroMinoKinds.reduce((acc, id) => {
+		acc.set(id, {
+			plus: Number((document.getElementById('plus-' + id) as HTMLInputElement)?.value || 0),
+			minus: Number((document.getElementById('minus-' + id) as HTMLInputElement)?.value || 0)
+		});
+		return acc;
+	}, new Map<MinoKind, { plus: number, minus: number }>());
 }
 window.addEventListener('DOMContentLoaded', () => {
 	loadGridFromHash();

@@ -43,3 +43,18 @@ h3 {
 #result-canvas {
   margin: 2px;
 }
+
+.preset-card {
+  margin: 20px;
+}
+.preset-card a {
+  text-decoration: none;
+  display: block;
+}
+.preset-card a:hover, .preset-card a:active, .preset-card a:focus {
+  text-decoration: underline;
+}
+.preset-h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}

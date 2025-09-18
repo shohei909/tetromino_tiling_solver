@@ -8,7 +8,7 @@ import { startPacking_dlx } from './packing_ver_dlx';
 export let usingMarker:null|{} = null;
 
 // 問題の事前処理や分割をおこなって、複数のソルバーに投げる
-export async function launchPacking(grid: boolean[][], minoSources: {id: MinoKind, plus: number, minus: number}[]) {
+export async function launchPacking(grid: boolean[][], minoSources:Map<MinoKind, { plus: number, minus: number }>) {
     // 処理の中断用マーカー
     let currentMarker = {}
     usingMarker = currentMarker;
@@ -331,12 +331,12 @@ export function abortPacking()
 
 
 function countMino(
-    minoSources: {id: MinoKind, plus: number, minus: number}[], 
+    minoSources: Map<MinoKind, { plus: number, minus: number }>, 
     fieldMinoLength: number
 ): Map<MinoKind, {required:number, additional:number}>
 {
     let count = 0;
-    let plus = minoSources.reduce((a,b) => a + b.plus, 0);
+    let plus = Array.from(minoSources.values()).reduce((a,b) => a + b.plus, 0);
     let requiredMap: Map<MinoKind, number> = new Map();
     let notRequiredMap: Map<MinoKind, number> = new Map();
     
@@ -352,9 +352,9 @@ function countMino(
         // 余剰ミノの消費
         if (plus > 0)
         {
-            for (const mino of minoSources) {
+            for (const [minoId, mino] of minoSources) {
                 if (mino.plus > 0) {
-                    notRequiredMap.set(mino.id, (notRequiredMap.get(mino.id) || 0) + 1);
+                    notRequiredMap.set(minoId, (notRequiredMap.get(minoId) || 0) + 1);
                     mino.plus--;
                     plus--;
                     count++;
@@ -363,12 +363,13 @@ function countMino(
         }
         else
         {
-            for (const mino of minoSources) {
+            for (const [minoId, mino] of minoSources) {
                 if (mino.minus > 0) {
                     mino.minus--;
                 }
-                else {
-                    notRequiredMap.set(mino.id, (notRequiredMap.get(mino.id) || 0) + 1);
+                else 
+                {
+                    notRequiredMap.set(minoId, (notRequiredMap.get(minoId) || 0) + 1);
                     count++;
                 }
             }
