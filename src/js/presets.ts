@@ -25,6 +25,11 @@ let data = new Map<string, PresetData[]>([
             "hash": "AAgKEAAAABEQAAAAEREQAAAREQAAERERAREREREAEREREQEREREREBEREQAAAAAAAQAAAAAAAAAAAAAA",
         },
         {
+            "subtitle": "パフェ率:53.41% / TSDパフェ率:19.05%",
+            "title":"オリーブ積み確定形・迷走砲妥協形",
+            "hash": "AAgKAAAAAAAAAAABEBERABERERAAEREREBEREREQARERERAREREREQEREQAAAAAAAAAAAAAAAAAAAAAA",
+        },
+        {
             "subtitle": "パフェ率:95.91% / TSDパフェ率:61.03%",
             "title":"山岳積み3号理想形",
             "hash": "AAgKEQAAAAARAAAAABERABEAERAAEREREBEREREQARERERAREREREQEREQAAAAAAAQAAAAAAAAAAAAAA",

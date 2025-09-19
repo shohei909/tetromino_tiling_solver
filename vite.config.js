@@ -16,7 +16,8 @@ export default defineConfig({
 		rollupOptions: {
 			// entry pointがあるindex.htmlのパス
 			input: {
-				"": resolve(__dirname, "src/index.html"),
+				main: resolve(__dirname, "src/index.html"),
+				presets: resolve(__dirname, "src/presets.html"),
 			},
 			// bundle.jsを差し替えする
 			output: {
